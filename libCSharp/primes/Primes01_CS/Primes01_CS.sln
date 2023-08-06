@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31321.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Primes01_CS", "Primes01_CS\Primes01_CS.csproj", "{83A7630A-CD50-4754-8449-A10E6AE8156C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "perfTest01", "..\tests\perfTest01\perfTest01.csproj", "{CC4C1F45-B6A9-4175-9CF9-0358126296B5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{83A7630A-CD50-4754-8449-A10E6AE8156C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83A7630A-CD50-4754-8449-A10E6AE8156C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83A7630A-CD50-4754-8449-A10E6AE8156C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83A7630A-CD50-4754-8449-A10E6AE8156C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC4C1F45-B6A9-4175-9CF9-0358126296B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC4C1F45-B6A9-4175-9CF9-0358126296B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC4C1F45-B6A9-4175-9CF9-0358126296B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC4C1F45-B6A9-4175-9CF9-0358126296B5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F106F127-07AB-4960-B764-5A1E4155ABCE}
+	EndGlobalSection
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN2019 - Subversion Support for Visual Studio
+	EndGlobalSection
+EndGlobal
