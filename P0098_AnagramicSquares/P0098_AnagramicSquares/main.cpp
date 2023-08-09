@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include "AnagramWordsProvider.h"
+
 
 class AnagramInfo {
 public:
@@ -35,49 +37,25 @@ bool isPalindrome(std::string& str1, std::string& str2)
 }
 
 
+
 std::list<std::pair<std::string, std::string>> pairList;
-void readWordsFile()
+void parseWordsFile()
 {
-    std::list<std::string> wordsList;
-    std::string fileContent;
+    
+    IAnagramWordsProvider* awprov = AnagramWordsProviderFactory::createProvider();
+    std::list<std::string> wordsList = awprov->getWordsList();
 
     std::map<std::string, std::list<std::string>> anagramInfoMap;
 
 
-    const std::string fileName = "0098_words.txt";
-    std::ifstream f (fileName);
-    if (f.is_open())
-    {
-        f >> fileContent;
-    }
-
-    size_t startix = 0;
-    size_t len = fileContent.size();
-    while (true)
-    {
-        size_t foundix = fileContent.find_first_of('"', (size_t)startix);
-        if (foundix == -1)
-        {
-            break;
-        }
-        size_t endix = fileContent.find_first_of('"', (size_t)foundix+1);
-        if (endix == -1)
-        {
-            break;
-        }
-        std::string s = fileContent.substr(foundix + 1, endix-foundix-1);
-        wordsList.push_back(s);
-        startix = endix + 1;
-    }
-    
     for (auto it = wordsList.begin(); it != wordsList.end() ; it++)
     {
         std::string orderedString = (*it);
         std::sort(orderedString.begin(), orderedString.end());
-        //if (orderedString.compare("OPST") == 0)
-        //{
-        //    std::cout << *it << std::endl;
-        //}
+        if (orderedString.compare("OPST") == 0)
+        {
+            std::cout << *it << std::endl;
+        }
         if (anagramInfoMap.count( orderedString) == 0)
         {
             std::list<std::string> l;
@@ -115,17 +93,21 @@ __int64 getAnagramicSquare(std::string& str1, std::string& str2, __int64 n)
             -1,-1,-1,-1,-1,-1,-1,-1,
             -1,-1 };
 
+   // if (str1.compare("RAISE") == 0 && (n * n) == 11025)
+   // {
+			//std::cout << str1 << std::endl;
+   // }
+
     __int64 prod = n * n;
     __int64 rest = prod;
     int len = (int)str1.size();
     int ixstr1 = len-1;
-    while (rest > 1)
+    while (rest > 0)
     {
         int digit = rest % 10;
-        char digitChar = digitMap[digit];
         char string1Char = str1[ixstr1];
-        
         char currentDigitString = digitMap[digit];
+
         if (currentDigitString != 0)
         {
             if (currentDigitString != string1Char)
@@ -162,6 +144,10 @@ __int64 getAnagramicSquare(std::string& str1, std::string& str2, __int64 n)
     __int64 root2 = (__int64)round(sqrt(num2));
     if (root2 * root2 == num2)
     {
+        //if (num2 > prod)
+        //{
+        //    std::cout << prod << "," << num2 << ", max: " << std::max(prod, num2) << std::endl;
+        //}
         return std::max(prod, num2);
     }
 
@@ -196,6 +182,14 @@ int solvePair(std::string& str1, std::string& str2)
         if (sq != -1)
         {
             __int64 sq2 = getAnagramicSquare(str2, str1, i);
+            if (sq2 > sq)
+            {
+                std::cout << str1 << "," << str2 << ": " << sq << "," << sq2 << ", max: " << std::max(sq, sq2) << std::endl;
+            }
+            else
+            {
+                std::cout << str1 << "," << str2 << ": " << sq << "," << sq2 << ", max: " << std::max(sq, sq2) << std::endl;
+            }
             return std::max(sq, sq2);
         }
     }
@@ -205,7 +199,7 @@ int solvePair(std::string& str1, std::string& str2)
 
 void init()
 {
-    readWordsFile();
+    parseWordsFile();
 }
 
 int solve()
@@ -223,7 +217,7 @@ int solve()
         if (val > highestValue)
             highestValue = val;
 
-        std::cout << it->first << " - " << it->second << std::endl;
+        // std::cout << it->first << " - " << it->second << std::endl;
     }
     
     return highestValue;
