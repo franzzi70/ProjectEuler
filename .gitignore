@@ -1,5 +1,7 @@
 # ignore binary output
 x64
+bin
+obj
 
 # vs working files
 *.vcxproj.user
