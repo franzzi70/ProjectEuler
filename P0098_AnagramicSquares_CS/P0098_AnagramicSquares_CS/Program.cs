@@ -249,7 +249,7 @@ namespace Main
             long solution = Solve();
             double ms = new TimeSpan(DateTime.Now.Ticks - startTime).TotalMilliseconds;
             System.Console.WriteLine(@"solution: {0}", solution);
-            //System.Console.WriteLine(@"duration: {0} ms", ms);
+            System.Console.WriteLine(@"duration: {0} ms", ms);
             //System.Console.WriteLine("press any key to continue...");
             Console.ReadKey(true);
         }
