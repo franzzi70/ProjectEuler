@@ -52,10 +52,10 @@ void parseWordsFile()
     {
         std::string orderedString = (*it);
         std::sort(orderedString.begin(), orderedString.end());
-        if (orderedString.compare("OPST") == 0)
-        {
-            std::cout << *it << std::endl;
-        }
+        //if (orderedString.compare("OPST") == 0)
+        //{
+        //    std::cout << *it << std::endl;
+        //}
         if (anagramInfoMap.count( orderedString) == 0)
         {
             std::list<std::string> l;
@@ -78,9 +78,13 @@ void parseWordsFile()
             }
             p->second.push_back(*it);
         }
-
     }
 
+    // output pairList
+    //for (auto it = pairList.begin(); it != pairList.end(); it++)
+    //{
+    //    std::cout << it->first << "," << it->second << std::endl;
+    //}
 
 }
 
@@ -106,13 +110,18 @@ __int64 getAnagramicSquare(std::string& str1, std::string& str2, __int64 n)
     {
         int digit = rest % 10;
         char string1Char = str1[ixstr1];
-        char currentDigitString = digitMap[digit];
+        char storedDigitChar = digitMap[digit];
 
-        if (currentDigitString != 0)
+        if (storedDigitChar != 0)
         {
-            if (currentDigitString != string1Char)
+            if (storedDigitChar != string1Char)
                 return -1;
         }
+        else if (charMap[string1Char - 65] != -1)
+        {
+			if (charMap[string1Char - 65] != digit)
+				return -1;
+		}
         else
         {
             digitMap[digit] = string1Char;
@@ -164,9 +173,12 @@ int solvePair(std::string& str1, std::string& str2)
     }
     __int64 lowExp10 = highExp10 / 10;
 
-    int highTestNum = (int)(sqrt(highExp10) +1);
+    __int64 firstTestNum = (int)(sqrt(highExp10) +1);
 
-    for (__int64 i = highTestNum; i >0 ;  i--)
+    __int64 highestNum = 0;
+
+
+    for (__int64 i = firstTestNum; i >0 ;  i--)
     {
         __int64 prod = i * i;
         if (prod >= highExp10)
@@ -178,24 +190,23 @@ int solvePair(std::string& str1, std::string& str2)
             break;
         }
 
-        __int64 sq = sq = getAnagramicSquare(str1, str2, i);
-        if (sq != -1)
+        __int64 num1 = getAnagramicSquare(str1, str2, i);
+        if (num1 > highestNum)
         {
-            __int64 sq2 = getAnagramicSquare(str2, str1, i);
-            if (sq2 > sq)
-            {
-                std::cout << str1 << "," << str2 << ": " << sq << "," << sq2 << ", max: " << std::max(sq, sq2) << std::endl;
-            }
-            else
-            {
-                std::cout << str1 << "," << str2 << ": " << sq << "," << sq2 << ", max: " << std::max(sq, sq2) << std::endl;
-            }
-            return std::max(sq, sq2);
-        }
+			highestNum = num1;
+    	}
+
+        __int64 num2 = getAnagramicSquare(str2, str1, i);
+        if (num2 > highestNum)
+        {
+			highestNum = num2;
+    	}
     }
 
-    return 0;
+    return highestNum;
+
 }
+
 
 void init()
 {
