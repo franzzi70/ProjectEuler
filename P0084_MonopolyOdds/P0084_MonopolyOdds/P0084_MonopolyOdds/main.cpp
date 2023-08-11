@@ -7,6 +7,7 @@
 #include <random>
 #include <algorithm>
 #include <vector>
+#include <map>
 #include <string>
 #include "fraction.h"
 #include "main.h"
@@ -76,7 +77,7 @@ ChestType chestCardStack[]{
     GotoBack3
 };
 
-ChanceType changeCardStack[] {
+ChanceType chanceCardStack[] {
     ChanceType::Other,
     ChanceType::Other,
     ChanceType::Other,
@@ -185,10 +186,25 @@ void init()
     for (int i = 0; i < 16; ++i)
     {
         int r = getRandomNumber(0, 15);
-		std::swap(changeCardStack[i], changeCardStack[r]);
+		std::swap(chanceCardStack[i], chanceCardStack[r]);
     }
 }
 
+ChanceType fetchChanceCard()
+{
+    static int index = 0;
+    ChanceType card = chanceCardStack[index];
+    index = (index + 1) % 16;
+    return card;
+}
+
+ChestType fetchChestCard()
+{
+    static int index = 0;
+    ChestType card = chestCardStack[index];
+    index = (index + 1) % 16;
+    return card;
+}
 
 int getTargetField(int fieldNum)
 {
@@ -196,7 +212,7 @@ int getTargetField(int fieldNum)
     switch (fields[fieldNum].m_type)
     {
 	case FieldType::Chance:
-        switch (changeCardStack[0])
+        switch (fetchChanceCard())
         {
 		case ChanceType::GotoStart:
 			targetField = 0;
@@ -248,7 +264,7 @@ int getTargetField(int fieldNum)
 		}
 		break;
 	case FieldType::CommunityChest:
-        switch (chestCardStack[0])
+        switch (fetchChestCard())
         {
 		case ChestType::GotoStart:
 			targetField = 0;
@@ -337,7 +353,8 @@ void test()
     }
 }
 
-std::string solve()
+
+std::string simulate(int maxRoundCount)
 {
     init();
 
@@ -348,7 +365,7 @@ std::string solve()
     int doubleCount = 0;
     std::vector<int> visitCount(40, 0);
 
-    while (roundCount < 10000000)
+    while (roundCount < maxRoundCount)
     {
 		// roll dice
 		int dice1 = getRandomNumber(1, 4);
@@ -421,8 +438,51 @@ std::string solve()
 		visitCount[maxIndex] = 0;
 	}
 
-
     return modalString;
+}
+
+std::string solve()
+{
+    const int simulationCount = 10000;
+    // define modalstringMap
+    std::map<std::string, int> modalStringMap;
+
+    for (int i = 0; i < simulationCount; i++)
+    {
+        std::string modalString = simulate(1000);
+        // count occurances of modal string
+        auto it = modalStringMap.find(modalString);
+        if (it != modalStringMap.end())
+        {
+			it->second += 1;
+		}
+        else
+        {
+			modalStringMap.insert(std::make_pair(modalString, 1));
+		}
+    }
+   
+    // solution: "101524"
+
+
+ //   std::vector<std::pair<std::string, int>> modalStringVector(modalStringMap.begin(), modalStringMap.end());
+ //   std::sort(modalStringVector.begin(), modalStringVector.end(), [](const std::pair<std::string, int>& p1, const std::pair<std::string, int>& p2) { return p1.second > p2.second; });
+ //   // print modal string vector
+ //   for (auto& p : modalStringVector)
+ //   {
+	//	std::cout << p.first << " " << p.second << std::endl;
+	//}
+
+
+    
+    
+    // return modal string with highest occurance
+    auto it = std::max_element(
+        modalStringMap.begin(),
+        modalStringMap.end(),
+            [](const std::pair<std::string, int>& p1, const std::pair<std::string, int>& p2) { return p1.second < p2.second; });
+    return it->first;
+
 }
 
 int main()
