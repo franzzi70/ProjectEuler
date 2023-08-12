@@ -222,7 +222,7 @@ bool enterHitNumber(Fraction& f, std::vector<bool>& hitNumbers)
 
 int countContinousHits(std::vector<bool>& hitNumbers)
 {
-    int highest = 0;
+    //int highest = 0;
     for (int i = 1; i < maxHitTest; i++)
     {
         if (!hitNumbers[i])
@@ -300,7 +300,6 @@ int solve()
 
     int a[] = { 1,2,3,4 };
     int length = sizeof(a) / sizeof(*a);
-    int count = 0;
     do {
         
         for (int i = 0 ; i < maxHitTest; i++)
@@ -322,7 +321,7 @@ int solve()
                     Fraction ev = (*exprIt)->eval();
                     //std::string str = (*exprIt)->toString();
                     //std::cout << ev.numerator << "/" << ev.denominator << std::endl;
-                    bool hit = enterHitNumber(ev, hitNumbers);
+                    /*bool hit = */ (void)enterHitNumber(ev, hitNumbers);
                 } while (std::next_permutation(a, a + 4));
             }
         }
@@ -339,7 +338,6 @@ int solve()
 
         }
 
-        count++;
     } while (nextCombination(9, length, a));
 
     return
