@@ -1,8 +1,8 @@
 #pragma once
-#define PRINT_MATRIX
 
 #include <vector>
 #include <string>
+#include <iostream>
 
 template <class T> class Matrix
 {
@@ -211,9 +211,6 @@ public:
 
 	void printMatrix()
 	{
-#ifndef PRINT_MATRIX
-		return;
-#endif
 		for (int i = 0; i < rows; i++)
 		{
 			std::cout << "[";

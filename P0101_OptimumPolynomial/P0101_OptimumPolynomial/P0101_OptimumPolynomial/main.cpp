@@ -41,11 +41,12 @@ public:
     T y;
 };
 
-Point<IntType> sequence[10];
+std::vector<Point<IntType>> sequence;
 
 IntType func(IntType n)
 {
-    return IntType(1) - IntType(n) + nPowk(n, 2) - nPowk(n, 3) + nPowk(n, 4) - nPowk(n, 5) + nPowk(n, 6) - nPowk(n, 7) + nPowk(n, 8) - nPowk(n, 9) + nPowk(n, 10);
+    return IntType(1) - IntType(n) + nPowk(n, 2) - nPowk(n, 3) + nPowk(n, 4) - nPowk(n, 5) + nPowk(n, 6) - nPowk(n, 7) + nPowk(n, 8) - nPowk(n, 9) + nPowk(n, 10) + IntType(0);
+    //return nPowk(n, 3);
 }
 
 
@@ -115,6 +116,7 @@ IntType getBOPn(int n)
 		}
         M.set(i, n, (scalar_t)sequence[i].y);
     }
+    M.printMatrix();
     if (M.gaussElimimination())
         M.printMatrix();
     else
@@ -134,42 +136,56 @@ IntType getBOPn(int n)
     }
 
     // solution is in last column
-    for (int i = 0; i < n; i++)
+    for (int i = 1; i <= n+1; i++)
     {
         IntType yApprox = approxFunc(iv, IntType(i));
-        IntType seqEl = sequence[i].y;
+        IntType seqEl = sequence[i-1].y;
         if (yApprox != seqEl)
         {
-            std::cout << "approxFunc != sequence" << std::endl;
+            std::cout << "**" << (std::string)yApprox << std::endl;
+            return yApprox;
+            //std::cout << "approxFunc != sequence" << std::endl;
         }
+        std::cout << (std::string)yApprox << ", ";
     }
+    std::cout << std::endl;
 
-    iv.push_back(0);
-    IntType outerApprox = approxFunc(iv, IntType(n));
-    IntType outerSeqEl = sequence[n].y;
-    IntType diff = outerApprox - outerSeqEl;
-    return diff;
+    //iv.push_back(0);
+    //IntType outerApprox = approxFunc(iv, IntType(n));
+    //IntType outerSeqEl = sequence[n].y;
+    //IntType diff = outerApprox - outerSeqEl;
+    
+    //std::cout << std::endl;
+    //std::cout << "val (" << n << "th degree) :" << (std::string)outerApprox
+    //    << " ; difference of " << (std::string)diff << " to "
+    //    << (std::string)outerSeqEl <<  std::endl;
+
+    //if (diff == 0)
+    //    return 0;
+    //else
+    //    return outerApprox;
+    return 0;
 }
 
 
 IntType solve()
 {
-    int polynomialDegree = 10;
+    int polynomialDegree = 12;
 
     // init sequence with func
-    for (int i = 0; i <= polynomialDegree; i++)
+    for (int i = 1; i <= polynomialDegree+5; i++)
     {
-        sequence[i] = Point<IntType>(i, func(i));
+        sequence.push_back(Point<IntType>(i, func(i)));
     }
 
     // print sequence
-    for (int i = 0; i <= polynomialDegree; i++)
+    for (int i = 0; i <= polynomialDegree+1; i++)
 	{
 		std::cout << (std::string)sequence[i].x << " " << (std::string)sequence[i].y << std::endl;
 	}
 
     IntType sum = IntType(0);
-    for (int i = 1; i < polynomialDegree + 1; i++)
+    for (int i = 1; i < polynomialDegree + 3; i++)
     {
         sum += getBOPn(i);
     }
