@@ -116,9 +116,11 @@ IntType getBOPn(int n)
 		}
         M.set(i, n, (scalar_t)sequence[i].y);
     }
-    M.printMatrix();
+    //M.printMatrix();
     if (M.gaussElimimination())
-        M.printMatrix();
+    {
+        //M.printMatrix();
+    }
     else
         std::cout << "gaussElimimination failed" << std::endl;
 
@@ -142,28 +144,12 @@ IntType getBOPn(int n)
         IntType seqEl = sequence[i-1].y;
         if (yApprox != seqEl)
         {
-            std::cout << "**" << (std::string)yApprox << std::endl;
+            //std::cout << "**" << (std::string)yApprox << std::endl;
             return yApprox;
             //std::cout << "approxFunc != sequence" << std::endl;
         }
-        std::cout << (std::string)yApprox << ", ";
+        //std::cout << (std::string)yApprox << ", ";
     }
-    std::cout << std::endl;
-
-    //iv.push_back(0);
-    //IntType outerApprox = approxFunc(iv, IntType(n));
-    //IntType outerSeqEl = sequence[n].y;
-    //IntType diff = outerApprox - outerSeqEl;
-    
-    //std::cout << std::endl;
-    //std::cout << "val (" << n << "th degree) :" << (std::string)outerApprox
-    //    << " ; difference of " << (std::string)diff << " to "
-    //    << (std::string)outerSeqEl <<  std::endl;
-
-    //if (diff == 0)
-    //    return 0;
-    //else
-    //    return outerApprox;
     return 0;
 }
 
@@ -179,10 +165,10 @@ IntType solve()
     }
 
     // print sequence
-    for (int i = 0; i <= polynomialDegree+1; i++)
-	{
-		std::cout << (std::string)sequence[i].x << " " << (std::string)sequence[i].y << std::endl;
-	}
+ //   for (int i = 0; i <= polynomialDegree+1; i++)
+	//{
+	//	std::cout << (std::string)sequence[i].x << " " << (std::string)sequence[i].y << std::endl;
+	//}
 
     IntType sum = IntType(0);
     for (int i = 1; i < polynomialDegree + 3; i++)
