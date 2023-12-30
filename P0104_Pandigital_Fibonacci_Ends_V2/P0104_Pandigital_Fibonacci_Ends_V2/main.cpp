@@ -135,10 +135,11 @@ int solve()
         }
 
         newFibLow %= 10'000'000'000;
-        if (newFibHigh > 100000000000000000L)
+        if (newFibHigh > 100'000'000'000'000'000L)
         {
-            newFibHigh /= 10;
-		}
+            fibHigh[0] /= 10;
+            fibHigh[1] /= 10;
+        }
 
         if (newFibLow > 1000000000)
         {
