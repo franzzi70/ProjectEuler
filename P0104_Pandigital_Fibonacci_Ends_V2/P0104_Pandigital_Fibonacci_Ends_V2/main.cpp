@@ -135,13 +135,13 @@ int solve()
         }
 
         newFibLow %= 10'000'000'000;
-        if (newFibHigh > 100'000'000'000'000'000L)
+        if (newFibHigh > 1000'000'000'000'000'000L)
         {
             fibHigh[0] /= 10;
             fibHigh[1] /= 10;
         }
 
-        if (newFibLow > 1000000000)
+        if (newFibLow > 1'000'000'000)
         {
             if (checkPandigBoth(newFibLow, newFibHigh))
                 return i;
