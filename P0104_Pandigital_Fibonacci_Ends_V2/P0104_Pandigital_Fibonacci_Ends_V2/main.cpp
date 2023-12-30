@@ -58,11 +58,11 @@ double xTimesPhiPow(int x, int power = 1)
 
 bool checkPandigLow(__int64 fib)
 {
-    if (fib < 100'000'000)
-		return false;
-
     __int64 rest = fib % 1'000'000'000;
-    std::bitset<9> digits;
+    if (rest < 100'000'000)
+        return false;
+
+    std::bitset<10> digits;
     while (rest > 0)
     {
         char digit = rest % 10;
@@ -73,12 +73,12 @@ bool checkPandigLow(__int64 fib)
             return false;
         }
 
-        if (digits.test(digit-1))
+        if (digits.test(digit))
         {
             return false;
         }
         else
-            digits.set(digit- 1);
+            digits.set(digit);
     }
     return true;
 }
@@ -121,7 +121,7 @@ int solve()
     do
     {
 
-        __int64 newFibLow = fibLow[0] + fibLow[1];
+        __int64 newFibLow = (fibLow[0] + fibLow[1]) % 1'000'000'000;
         __int64 newFibHigh = fibHigh[0] + fibHigh[1];
         if (i % 2 == 0)
         {
@@ -134,14 +134,13 @@ int solve()
 			fibHigh[1] = newFibHigh;
         }
 
-        newFibLow %= 10'000'000'000;
         if (newFibHigh > 1000'000'000'000'000'000L)
         {
             fibHigh[0] /= 10;
             fibHigh[1] /= 10;
         }
 
-        if (newFibLow > 1'000'000'000)
+        if (newFibLow >= 100'000'000)
         {
             if (checkPandigBoth(newFibLow, newFibHigh))
                 return i;
