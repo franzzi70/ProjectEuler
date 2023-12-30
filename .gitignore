@@ -5,4 +5,5 @@ obj
 
 # vs working files
 *.vcxproj.user
+*.vcxproj.filters
 .vs
