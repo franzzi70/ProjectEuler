@@ -12,6 +12,9 @@
 // 1/(n+a) + 1/(n+b) = 1/n
 
 // c*a=b*(a-c)
+
+__int64 maxCountTracker = 0;
+
 int findSolutions_SlowBruteForce(__int64 c)
 {
     std::set<std::pair<__int64, __int64>> solutions;
@@ -43,15 +46,20 @@ int findSolutions_SlowBruteForce(__int64 c)
                 if (solutions.find(testPair) != solutions.end())
 					continue;
                 //std::cout << "1/" << a << " + 1/" << b << " = 1/" << c << std::endl;
-				count++;
+                count++;
                 solutions.insert(testPair);
 			}
 		}
-	}
+        if (count > maxCountTracker)
+        {
+			maxCountTracker = count;
+			//std::cout << "c: " << c << " count: " << count << std::endl;
+        }
+    }
 	return count;
 }
 
-int solve_slowBruteForce()
+__int64 solve_slowBruteForce()
 {
     for (__int64 i = 2; ; i++)
     {
@@ -71,7 +79,7 @@ int solve_slowBruteForce()
 // approach: generate (a*b) with maximal number of prime factors
 int solve()
 {
-    solve_slowBruteForce();
+    return solve_slowBruteForce();
 }
 
 int main()
