@@ -59,7 +59,7 @@ int solve_slowBruteForce()
         if (i%10000==0)
             std::cout << "i: " << i << " solutions: " << solutions << std::endl;
         if (solutions > 1000)
-            return i;
+            return (int)i;
     }
     // solution: 180180
 
@@ -71,7 +71,7 @@ int solve_slowBruteForce()
 // approach: generate (a*b) with maximal number of prime factors
 int solve()
 {
-    solve_slowBruteForce();
+    return solve_slowBruteForce();
 }
 
 int main()
