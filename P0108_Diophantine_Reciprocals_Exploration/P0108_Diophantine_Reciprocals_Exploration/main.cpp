@@ -99,10 +99,10 @@ int findSolutions_SlowBruteForce(__int64 c, bool shortOutput = false)
         a++
         )
     {
+        __int64 b = a * c / (a - c);
         if //(c * a % (a - c) == 0)
-            ((a + b) % c == a * b)
+            ((a + b) * c == a * b)
         {
-            __int64 b = c * a / (a - c);
             if (c * b % (b - c) == 0)
             {
                 std::pair<__int64, __int64> testPair = std::make_pair(a, b);
