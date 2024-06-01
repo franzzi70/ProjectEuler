@@ -19,6 +19,25 @@ namespace primes
 		{
 			return !getBitVal(num);
 		}
+
+		bool isPrimeExt(__int64 num)
+		{
+			if (num <= m_maxNumber)
+				return isPrime((int)num);
+			if ((__int64)m_maxNumber * m_maxNumber < num)
+			{
+				if (num % 2 == 0)
+					return false;
+				for (int i = 3; i <= m_maxNumber; i += 2)
+				{
+					if (num % i == 0)
+						return false;
+				}
+			}
+			//return !getBitVal(num);
+			return false;
+		}
+
 	private:
 		std::vector<std::bitset<64>> primesBits;
 
