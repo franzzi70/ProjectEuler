@@ -38,6 +38,25 @@ namespace primes
 			return false;
 		}
 
+		int nextPrime(int num)
+		{
+			int _ix = num + 1;
+			while (_ix <= m_maxNumber)
+			{
+				if (isPrime(_ix))
+					return _ix;
+				_ix += 1;
+			}
+			// use isPrimeExt to find primes beyond the sieve
+			_ix = num + 1;
+			while (true)
+			{
+				if (isPrimeExt(_ix))
+					return _ix;
+				_ix += 1;
+			}
+		}
+
 	private:
 		std::vector<std::bitset<64>> primesBits;
 
