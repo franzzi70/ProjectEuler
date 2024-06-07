@@ -6,10 +6,10 @@
 #include <chrono>
 #include <string>
 #include <vector>
-#include <set>
 
 class Move {
 public:
+    int id;
     int value;
     std::string name;
 };
@@ -34,13 +34,15 @@ std::vector<MoveList> moveLists;
 
 int solve()
 {
-	moves.push_back({ 25, "SB" });
-    moves.push_back({ 50, "DB" });
+    int id = 1;
+
+	moves.push_back({id++, 25, "SB" });
+    moves.push_back({id++, 50, "DB" });
     for (int i = 1; i <= 20; i++)
     {
-        moves.push_back(Move{ i, "S" + std::to_string(i) });
-        moves.push_back(Move{ i * 2, "D" + std::to_string(i) });
-        moves.push_back(Move{ i * 3, "T" + std::to_string(i) });
+        moves.push_back(Move{ id++, i, "S" + std::to_string(i) });
+        moves.push_back(Move{ id++, i * 2, "D" + std::to_string(i) });
+        moves.push_back(Move{ id++, i * 3, "T" + std::to_string(i) });
     }
 
     for (auto it = moves.begin(); it != moves.end(); it++)
@@ -65,9 +67,6 @@ int solve()
 		}
 	}
 
-
-    std::set <std::string> listNames;
-
     moveListsSize = (int)moveLists.size();
     for (int i=0;i<moveListsSize;i++)
     {
@@ -75,17 +74,17 @@ int solve()
         { 
             for (auto it2 = moves.begin(); it2 != moves.end(); it2++)
             {
-                std::string probeString = it2->name + moveLists[i].moves[0].name + moveLists[i].moves[1].name;
-                std::string probeString2 = moveLists[i].moves[0].name + it2->name + moveLists[i].moves[1].name;
-                if (listNames.find(probeString) != listNames.end() || listNames.find(probeString2) != listNames.end())
-					continue;
+
+                // f1, f2, f3 == f2, f1, f3
+                if (moveLists[i].moves[0].id > it2->id)
+                    continue;
 
                 MoveList ml;
                 ml.add(*it2);
                 ml.add(moveLists[i].moves[0]);
                 ml.add(moveLists[i].moves[1]);
                 moveLists.push_back(ml);
-                listNames.insert(probeString);
+                // listNames.insert(probeString);
             }
         }
     }
