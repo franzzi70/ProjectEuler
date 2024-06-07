@@ -4,7 +4,7 @@
 #include "primes.h"
 
 #define FACTOR_VECSIZE 20
-#define MAXPRIME 10000000
+#define MAXPRIME 1000
 #define PRIMEARRSIZE (MAXPRIME/2)
 
 primes::PrimesSieve g_sieve(MAXPRIME);
@@ -12,65 +12,10 @@ int* g_primes;
 int g_primesCount = 0;
 
 
-class PrimeFactors {
-public:
-    __int64 m_number;
-    __int8 m_factorCount;
-    std::vector<__int64> m_factors;
-    std::vector<std::pair<int, int>>
-    m_factorGroups;
-
-    PrimeFactors(__int64 n)
-    {
-        m_number = n;
-        calculateFactors(n);
-    }
-private:
-    void calculateFactors(__int64 n)
-    {
-        int primeIx = 0;
-        int groupIx = 0;
-        int groupCount = 0;
-        __int64 lastPrime = 0;
-        int factorCount = 0;
-        __int64 testNum = n;
-
-        do
-        {
-            while (testNum % g_primes[primeIx] != 0) {
-                primeIx += 1;
-            }
-            __int64 _prime = g_primes[primeIx];
-            testNum /= _prime;
-            m_factors.push_back(_prime);
-            groupCount += 1;
-
-			if (_prime == lastPrime && lastPrime != 0)
-			{
-				m_factorGroups[groupIx].second += 1;
-			}
-			else
-			{
-				m_factorGroups.push_back(std::pair<int, int>(_prime, 1));
-				if (lastPrime != 0)
-                    groupIx += 1;
-			}
-
-            lastPrime = _prime;
-            factorCount += 1;
-        } while (testNum > 1);
-        m_factorCount = factorCount;
-    }
-
-};
-
-
 bool isPrime(__int64 num)
 {
     return g_sieve.isPrimeExt(num);
 }
-
-
 
 void init()
 {
@@ -96,11 +41,6 @@ void init()
     }
 
     g_primes = new int[_primeIx];
-
- //   for (int i=0; i < _primeIx; i++)
-	//{
-	//	//g_primes[i] = g_primes_tmp[i];
-	//}
 
     // #pragma warning(suppress: C6386)
     memcpy(g_primes, g_primes_tmp, _primeIx * sizeof(int));
@@ -269,116 +209,9 @@ std::vector<std::pair<int, int>> findPrimeGroups(int solutionCount)
     return n.m_currentMinGroup;
 }
 
-void test()
-{
-    primes::PrimesSieve g_sieve(1000000);
-
-    int a = 957337;
-
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrime(a) << std::endl;
-
-    a = 1000007;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-    a += 1;
-    std::cout << a << " is prime: " << g_sieve.isPrimeExt(a) << std::endl;
-}
-
-void testCalc1(int num)
-{
-    PrimeFactors pf(num);
-    std::cout << "number: " << num << " solutions:" << solutionCount(pf.m_factorGroups) << std::endl;
-}
 __int64 solve()
 {
     init();
-
-    // test();
-
-    //testCalc1(4 * 9 * 3);
-
-    //testCalc1(2);
-    //testCalc1(3);
-    //testCalc1(4);
-    //testCalc1(5);
-    //testCalc1(6);
-    //testCalc1(7);
-    //testCalc1(1260);
-
 
     // 1/a + 1/b = 1/n
     // number of divisors of n
