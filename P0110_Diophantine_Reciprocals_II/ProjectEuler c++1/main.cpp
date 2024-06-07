@@ -17,7 +17,7 @@ public:
     __int64 m_number;
     __int8 m_factorCount;
     std::vector<__int64> m_factors;
-    std::vector<std::pair<__int64, int>>
+    std::vector<std::pair<int, int>>
     m_factorGroups;
 
     PrimeFactors(__int64 n)
@@ -51,7 +51,7 @@ private:
 			}
 			else
 			{
-				m_factorGroups.push_back(std::pair<__int64, int>(_prime, 1));
+				m_factorGroups.push_back(std::pair<int, int>(_prime, 1));
 				if (lastPrime != 0)
                     groupIx += 1;
 			}
@@ -121,12 +121,12 @@ __int64 factorCount(std::vector<int>& v)
     return result;
 }
 
-__int64 factorCount(std::vector<std::pair<__int64, int>> &fGroups)
+__int64 factorCount(std::vector<std::pair<int, int>> &fGroups)
 {
     __int64 result = 1;
     for (auto it = fGroups.begin(); it != fGroups.end(); it++)
 	{
-		result *= (it->second * 2 + 1);
+		result *= (it->first * 2 + 1);
 	}
     return result;
 }
@@ -141,9 +141,31 @@ __int64 solutionCount(std::vector<int>& v)
     return (factorCount(v) + 1) / 2;
 }
 
-__int64 solutionCount(std::vector<std::pair<__int64, int>>& fGroups)
+__int64 solutionCount(std::vector<std::pair<int, int>>& fGroups)
 {
     return (factorCount(fGroups) + 1) / 2;
+}
+
+__int64 calcNumber(std::vector<int>& v)
+{
+    __int64 result = 1;
+    int prime = 2;
+    for (auto it = v.begin(); it != v.end(); it++)
+    {
+        result *= (*it) * prime;
+        prime = g_sieve.nextPrime(prime);
+    }
+    return result;
+}
+__int64 calcNumber(std::vector<std::pair<int,int>>& gv)
+{
+    __int64 result = 1;
+    for (auto it = gv.begin(); it != gv.end(); it++)
+    {
+        for (int i=0 ; i < it->first ; i++)
+            result *= it->second;
+    }
+    return result;
 }
 
 class Node {
@@ -152,83 +174,99 @@ public:
 	{
         int initialCount = 0;
         __int64 initialTerm = 1;
-        //__int64 nTn = (__int64)n* (__int64)n;
         __int64 factorMinCount = n * 2 - 1;
+        __int64 f = 1;
         while (initialTerm < factorMinCount)
 		{
-			initialTerm *= 3;
-			initialCount += 1;
+            __int64 prime = g_primes[initialCount];
+            f *= prime;
+            initialTerm *= 3;
+            m_primegroups.push_back(std::pair<int, int>(0, prime));
+            initialCount += 1;
 		}
-        m_primegroups = std::vector<int>(initialCount, 1);
-        m_goalSolutionCount = n;
+        m_currentMinNumber = f;
+        m_currentMinGroup = m_primegroups;
         m_sequenceLen = initialCount;
+        m_goalSolutionCount = n;
 	}
     
-    bool move()
+    void distr()
     {
-        return move(m_sequenceLen-1);
-    }
-
-    bool move(int position)
-    {
-        int _position = position;   // take position from parameter
-        int _value = m_primegroups[_position];
-        int ix = 0;
-        // try to find a position to move to from left to right:
-        std::pair <int, int> start_bak = std::pair<int, int>(_position, _value);
-        while (true)
+        for (int i = 0; i < 100; i++)
         {
-            std::pair <int, int> goal_bak = std::pair<int, int>(ix, m_primegroups[ix]);
-            int len_bak = m_sequenceLen;
-            if (_position == m_sequenceLen-1 && _value == 1)
+            int parNumbers = m_sequenceLen + i;
+            if (distr(0, 1, parNumbers, parNumbers))
             {
-                m_sequenceLen -= 1;
-            }
-            m_primegroups[_position] -= 1;
-            m_primegroups[ix] += 1;
-            __int64 _solutionCount = solutionCount(m_primegroups);
-
-            if (_solutionCount > m_goalSolutionCount)
-            {
-                return true;    // moved.
-            }
-            else
-            {
-                // restore values:
-                m_primegroups[start_bak.first] = start_bak.second;
-                m_primegroups[goal_bak.first] = goal_bak.second;
-                m_sequenceLen = len_bak;
-
-                int thisGroupValue = goal_bak.second;
-                while (ix < m_sequenceLen && m_primegroups[ix] == thisGroupValue)
-				{
-					ix += 1;
-				}
-                if (ix == m_sequenceLen || ix >= _position)
-                {
-                    return false;
-                }
+                std::cout << "parNumbers: " << parNumbers << std::endl;
+                std::cout << "currentMinNumber: " << m_currentMinNumber << " , solutionCount:" << solutionCount(m_currentMinGroup) << std::endl;
             }
         }
     }
 
-    int m_sequenceLen;
-    int m_position;
-    int m_goalSolutionCount;
-    std::vector<int> m_primegroups;
-};
-
-std::vector<int> findPattern(int solutionCount)
-{
-
-    Node n(solutionCount);
-    while (n.move())
+    bool distr(int position, __int64 factor, int numberCount, int maxHeigth)
     {
-        std::cout << "moved" << std::endl;
+        if (position >= m_sequenceLen)
+        {
+            return false;
+        }
+
+        if (numberCount == 0)
+        {
+            __int64 _solutionCount = solutionCount(m_primegroups);
+            if (_solutionCount > m_goalSolutionCount)
+            {
+                if (factor < m_currentMinNumber)
+				{
+					m_currentMinNumber = factor;
+					m_currentMinGroup = m_primegroups;
+                    return true;
+				}
+            }
+            return false;
+        }
+
+        bool found = false;
+        __int64 f = 1;
+        for (int i = 1 ; i <= maxHeigth; i++)
+        {
+            m_primegroups[position].first = i;
+            f *= m_primegroups[position].second;
+
+            __int64 parFactor = factor * f;
+            if (parFactor > m_currentMinNumber)
+				break;
+
+            if (
+                distr(
+                    position + 1,
+                    factor * f,
+                    numberCount - i,
+                    i
+                    )
+                )
+            {
+                found = true;
+            }
+            
+        }
+        m_primegroups[position].first = 0;
+        return found;
     }
 
 
-    return n.m_primegroups;
+    int m_sequenceLen;
+    int m_goalSolutionCount;
+    std::vector<std::pair<int,int>> m_primegroups;
+    __int64 m_currentMinNumber;
+    std::vector<std::pair<int, int>> m_currentMinGroup;
+};
+
+std::vector<std::pair<int, int>> findPrimeGroups(int solutionCount)
+{
+    Node n(solutionCount);
+    n.distr();
+
+    return n.m_currentMinGroup;
 }
 
 void test()
@@ -362,15 +400,19 @@ __int64 solve()
 
     // 1. find a distribution pattern with smallest primes with smalles number above 1999999
 
-    int solutionCount = 4000000;
-    std::vector<int> ttemp = findPattern(solutionCount);
+    int minSolutionCount = 4000000;
+    std::vector<std::pair<int,int>> ttemp = findPrimeGroups(minSolutionCount);
+    __int64 _solutionCount = solutionCount(ttemp);
+    __int64 _solution = calcNumber(ttemp);
 
+    //std::cout << "number: " << _solution << std::endl;
+    std::cout << "number: " << _solution << " solutions: " << solutionCount(ttemp) << std::endl;
 
 
     // 2. find the smallest number with that distribution pattern
 
-
-    return 0;
+	
+    return _solution;
 }
 
 
