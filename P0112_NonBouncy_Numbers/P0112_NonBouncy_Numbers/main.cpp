@@ -6,67 +6,82 @@
 #include <chrono>
 #include <vector>
 
-#define DIGITCOUNT 6
+#define DIGITCOUNT 100
 const int g_digitCount = DIGITCOUNT;
 
 std::vector<__int64> g_memoDecr (DIGITCOUNT * 10, -1);
 std::vector<__int64> g_memoIncr (DIGITCOUNT * 10, -1);
 
 
-__int64 numberCountDecr(int totalDigits, int position, int prevDigit)
+__int64 numberCountDecr(int digitCount, int position, int prevDigit)
 {
-    if (position == 0)
-    {
-        return prevDigit + 1;   // count = all digits <= prev digit.
-    }
-
     __int64 memValue = g_memoDecr[position * 10 + prevDigit];
     if (memValue != -1)
         return memValue;
+
+    __int64 value = 0;
+    if (position == 0)
+    {
+        value = prevDigit + 1;   // count = all digits <= prev digit.
+    }
     else
     {
-        __int64 sum = 0;
         for (int i = 0; i <= prevDigit; i++)
         {
-            // prevent leading 0
-            if (position == totalDigits - 1 && i == 0)
+            // do not allow leading 0
+            if (position == digitCount-1 && i == 0)
                 continue;
-
-            sum += numberCountDecr(totalDigits, position - 1, i);
+            value += numberCountDecr(digitCount, position - 1, i);
         }
-        g_memoDecr[position * 10 + prevDigit] = sum;
-        return sum;
     }
+    g_memoDecr[position * 10 + prevDigit] = value;
+    return value;
 }
 
 
-__int64 numberCountIncr(int totalDigits, int position, int prevDigit)
+__int64 numberCountIncr(int position, int prevDigit)
 {
-    if (position == 0)
-    {
-        return (10 - prevDigit);   // count = all digits <= prev digit.
-    }
-
     __int64 memValue = g_memoIncr[position * 10 + prevDigit];
     if (memValue != -1)
         return memValue;
+
+    __int64 value = 0;
+    if (position == 0)
+    {
+        value = 10 - prevDigit;   // count = all digits <= prev digit.
+    }
     else
     {
-        __int64 sum = 0;
         for (int i = prevDigit; i <= 9; i++)
         {
-            sum += numberCountIncr(totalDigits, position - 1, i);
+            value += numberCountIncr(position - 1, i);
         }
-        g_memoIncr[position * 10 + prevDigit] = sum;
-        return sum;
     }
+    g_memoIncr[position * 10 + prevDigit] = value;
+    return value;
+}
+
+void initMem()
+{
+    int sz = g_memoDecr.size();
+    for (int i=0;i<sz;i++)
+	{
+		g_memoDecr[i] = -1;
+		g_memoIncr[i] = -1;
+	}
 }
 
 __int64 solve(int digitCount)
 {
     __int64 sum = 0;
-    sum += numberCountDecr(digitCount, digitCount - 1, 9);
-    sum += numberCountIncr(digitCount, digitCount - 1, 1);
+    for (int i = 2; i <= digitCount; i++)
+    {
+        initMem();
+        sum += numberCountDecr(i, i - 1, 9);
+        sum += numberCountIncr(i - 1, 1);
+        sum -= 9;   // remove the 9 numbers that are both increasing and decreasing
+    }
+    sum += 9;   // 9 one-digit numbers
 
     return sum;
 }
