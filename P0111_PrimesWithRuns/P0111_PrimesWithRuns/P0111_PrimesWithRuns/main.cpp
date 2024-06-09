@@ -148,7 +148,7 @@ __int64 solveForDigit(int digit)
         {
             v[0] = std::pair<int, int>(0, lastTestDigit[i]);
 
-            for (int j = 1; j < 9; j++)
+            for (int j = 1; j < 10; j++)
             {
 
                 v[1] = std::pair<int, int>(9, j);
@@ -185,4 +185,5 @@ int main()
     auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     std::cout << "solution: " << solution << std::endl << "duration: " << microSec << " micro seconds (" << ms << " ms)" << std::endl;
+    return 0;
 }
