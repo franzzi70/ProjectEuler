@@ -99,6 +99,7 @@ int findSolutions_SlowBruteForce(__int64 c, bool shortOutput = false)
         a++
         )
     {
+        __int64 b = c * a / (a - c);
         if //(c * a % (a - c) == 0)
             ((a + b) % c == a * b)
         {
