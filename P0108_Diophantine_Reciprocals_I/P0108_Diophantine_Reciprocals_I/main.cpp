@@ -67,7 +67,7 @@ __int64 solve_slowBruteForce()
         if (i%10000==0)
             std::cout << "i: " << i << " solutions: " << solutions << std::endl;
         if (solutions > 1000)
-            return i;
+            return (int)i;
     }
     // solution: 180180
 
