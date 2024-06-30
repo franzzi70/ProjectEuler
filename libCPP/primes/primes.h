@@ -24,19 +24,19 @@ namespace primes
 		{
 			if (num <= m_maxNumber)
 				return isPrime((int)num);
-			if ((__int64)m_maxNumber * m_maxNumber < num)
+			if ((__int64)m_maxNumber * m_maxNumber > num)
 			{
+				int testPrime = 2;
 				int upper = (int)sqrt(num) + 1;
-				if (num % 2 == 0)
-					return false;
-				for (int i = 3; i <= upper; i += 2)
+				while (testPrime <= upper)
 				{
-					if (num % i == 0)
+					if (num % testPrime == 0)
 						return false;
+					testPrime = nextPrime(testPrime);
 				}
 			}
 			//return !getBitVal(num);
-			return false;
+			return true;
 		}
 
 		int nextPrime(int num)
@@ -63,8 +63,6 @@ namespace primes
 
 		bool getBitVal(int num)
 		{
-			if (num > m_maxNumber || num < 0)
-				return false;
 			int _vectorIx = num / 64;
 			int _bitIx = num % 64;
 			return primesBits[_vectorIx][_bitIx];
