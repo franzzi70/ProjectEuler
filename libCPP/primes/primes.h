@@ -26,9 +26,10 @@ namespace primes
 				return isPrime((int)num);
 			if ((__int64)m_maxNumber * m_maxNumber < num)
 			{
+				int upper = (int)sqrt(num) + 1;
 				if (num % 2 == 0)
 					return false;
-				for (int i = 3; i <= m_maxNumber; i += 2)
+				for (int i = 3; i <= upper; i += 2)
 				{
 					if (num % i == 0)
 						return false;
