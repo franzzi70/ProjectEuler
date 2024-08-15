@@ -233,10 +233,10 @@ int solve()
             for (int z = 1; z <= maxZ; z++)
             {
                 int layers = 0;
+                int c = cubeCount(x, y, z, layers);
+                calculationCount += 1;
                 while (true)
                 {
-                    int c = cubeCount(x, y, z, layers);
-                    calculationCount += 1;
                     if (c > MAXCUBECOUNT)
                     {
                         // major performance improvement by pruning y- and z- runs
@@ -250,6 +250,8 @@ int solve()
                         break;
                     }
                     counts[c] += 1;
+                    // optimization: add difference instead of using function should need less operations:
+                    c += 4 * (x + y + z) + 8 * layers;
                     layers += 1;
                 }
             }
