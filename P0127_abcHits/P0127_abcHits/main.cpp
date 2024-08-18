@@ -5,7 +5,7 @@
 #include "primes.h"
 
 
-//const int MAXNUM = 20'000;
+//const int MAXNUM = 19'999;
 const int MAXNUM = 999;
 const int MAXPRIME = MAXNUM+1000;
 const int PRIMEARRSIZE = (MAXPRIME / 2);
