@@ -37,7 +37,7 @@ public:
     {
         m_number = other.m_number;
         m_radicalCount = other.m_radicalCount;
-        _memccpy(m_radicals, other.m_radicals, FACTOR_VECSIZE, sizeof(int));
+        std::memcpy(m_radicals, other.m_radicals, FACTOR_VECSIZE * sizeof(int));
         //m_radicals = other.m_radicals;
     }
 
@@ -188,16 +188,7 @@ __int64 solve()
 
     __int64 sum = 0;
     int count = 0;
-
-    //std::vector<int>* a_radials = new std::vector<int>(FACTOR_VECSIZE, 0);
-    //std::vector<int>* b_radials = new std::vector<int>(FACTOR_VECSIZE, 0);
-    //std::vector<int> *c_radials = new std::vector<int>(FACTOR_VECSIZE, 0);
-
     int cLow = 3;
-
-    //PrimeRadicals ra(2, a_radials);
-    //PrimeRadicals rb(2, b_radials);
-    //PrimeRadicals rc(2, c_radials);
 
     for (int c = cLow; c <= MAXNUM; c++)
     {
@@ -209,7 +200,7 @@ __int64 solve()
         //rc.calculateRadicals(c);
 
         PrimeRadicals* rc = g_radicals[c];
-        int c_radical = rc->getRadical();;
+        int c_radical = rc->getRadical();
         if (c_radical * 2 > c)
 			continue;
 
@@ -245,25 +236,14 @@ __int64 solve()
 
             int a_radical = a == 1 ? 1 : ra->getRadical();
 
-            if (a_radical * rb->getRadical() * c_radical < c)
+            if ((__int64)a_radical * (__int64)rb->getRadical() * (__int64)c_radical < (__int64)c)
 			{
-                //std::cout << "a:" << a << " b:" << b << " c:" << c << std::endl;
+                //    std::cout << "a:" << a << " b:" << b << " c:" << c << std::endl;
 				count += 1;
                 sum += c;
 			}
 
-            //PrimeRadicals f3(b, c_radials);
-
-			//if (f1.getRadical() * f2.getRadical() * f3.getRadical() < c)
-			//{
-			//	if (g_sieve.isCoprime(a, b) && g_sieve.isCoprime(a, c) && g_sieve.isCoprime(b, c))
-			//	{
-			//		return c;
-			//	}
-			//}
 		}
-        //if (i%1000==0)
-        //    std::cout << f1.getRadical() << std::endl;
     }
 
     std::cout << "count: " << count << std::endl;
