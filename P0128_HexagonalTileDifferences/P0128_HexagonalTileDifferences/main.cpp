@@ -6,7 +6,7 @@
 #include <chrono>
 #include "primes.h"
 
-const int MAXPRIME = 100'000'000;
+const int MAXPRIME = 1'000'000;
 primes::PrimesSieve g_primes(MAXPRIME);
 
 class Field
@@ -63,6 +63,7 @@ public:
         int segPosPrev = 0;
         int segPosNext = 0;
 
+        /*
         for (int i = 0; i < 6; i++)
         {
             for (int j = 0; j < layer; j++)
@@ -93,6 +94,55 @@ public:
             segPosPrev += layer - 1;
             segPosNext += layer + 1;
         }
+        */
+
+        // only corners can be prime (2 outside or inside are odd and even, just yield two primes and neighbors on layer have only 1 diff)
+        // therefore only check corners:
+        // more investigation leads to only checking two tiles around first corner per layer.
+
+        int _foundCount = 0;
+        __int64 tileValue = getTileValue(layer, 0);
+
+        int layerSize = 6 * layer;
+        int nextLayerSize = layerSize + 6;
+        int prevLayerSize = layerSize - 6;
+
+        //if (tileValue == 8)
+        //    std::cout << "8" << std::endl;
+
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer, layerSize - 1));
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer - 1, 0));
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer + 1, 0));
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer + 1, 1));
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer + 1, nextLayerSize - 1));
+
+        if (_foundCount == 3)
+        {
+            m_foundCount += 1;
+            m_foundTiles.push_back(tileValue);
+            std::cout << "found field " << m_foundCount << ": " << tileValue << std::endl;
+        }
+
+        _foundCount = 0;
+        tileValue = getTileValue(layer, layerSize - 1);
+
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer, 0));
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer - 1, 0));
+        if (layer == 1)
+            _foundCount += diffIsPrime(tileValue, getTileValue(layer + 1, nextLayerSize - 3));
+        else
+            _foundCount += diffIsPrime(tileValue, getTileValue(layer - 1, -1));
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer + 1, nextLayerSize - 1));
+        _foundCount += diffIsPrime(tileValue, getTileValue(layer + 1, nextLayerSize - 2));
+
+        if (_foundCount == 3)
+        {
+            m_foundCount += 1;
+            m_foundTiles.push_back(tileValue);
+            std::cout << "found field " << m_foundCount << ": " << tileValue << std::endl;
+        }
+
+
     }
 
 
