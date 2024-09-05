@@ -69,6 +69,29 @@ public:
 		}
 		m_size = size;
 	};
+	
+	MyBigInteger(double val, int base = DEFAULT_BASE) {
+		m_base = base;
+		if (val == 0)
+		{
+			m_digits.push_back(0);
+			m_size = 1;
+			m_negative = false;
+			return;
+		}
+		__int64 tmpVal = (__int64)std::abs(val);
+		int size = 0;
+		m_negative = val < 0;
+		while (tmpVal > 0)
+		{
+			__int32 digit = (__int32)(tmpVal % m_base);
+			tmpVal /= m_base;
+			m_digits.push_back(digit);
+			size += 1;
+		}
+		m_size = size;
+	};
+
 
 	~MyBigInteger() {};
 	MyBigInteger operator + (const MyBigInteger& other) {
@@ -408,6 +431,19 @@ public:
 			}
 			result.append(std::string(buf));
 		}
+		return result;
+	};
+
+	operator double() const {
+		double result = 0.0;
+		double factor = 1.0;
+		for (int i = 0; i < m_size; i++)
+		{
+			result += m_digits[i] * factor;
+			factor *= m_base;
+		}
+		if (m_negative)
+			result = -result;
 		return result;
 	};
 
@@ -829,6 +865,11 @@ private:
 
 
 };	// class MyBigInteger
+
+MyBigInteger operator *(__int64 factor, const MyBigInteger& bigInt)
+{
+	return bigInt * factor;
+}
 
 //MyBigInteger std::abs(const MyBigInteger& value) const
 //{
