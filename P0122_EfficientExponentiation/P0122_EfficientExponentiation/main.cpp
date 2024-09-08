@@ -20,7 +20,7 @@ class block;
 struct BlockCountRec {
     block* b;
     int count;
-    };
+};
 
 class block {
 public:
@@ -38,7 +38,7 @@ public:
         multCount = -1;
         multCount = determineMultCount();
         (void)registerBlock();
-        }
+    }
     block(block* left, block* right, int combinedMultCount) {
         assert(left->value >= right->value);
         value = left->value + right->value;
@@ -49,12 +49,12 @@ public:
     }
     int value;
     int multCount;
-    
+
     static std::list<block*>* generateBlocks()
     {
         int skipCount = 0;
-        std::list<block*> *newBlockList = new std::list<block*>();
-        std::list<block*> *lastGeneration = g_generations.back();
+        std::list<block*>* newBlockList = new std::list<block*>();
+        std::list<block*>* lastGeneration = g_generations.back();
 
         for (block* b : *lastGeneration)
         {
@@ -112,29 +112,29 @@ public:
 
 private:
     int determineMultCount()
-	{
+    {
         BlockCountRec bc[MAXBLOCKBUFCOUNT];
         int blockCountIndex = 0;
         return determineMultCount(bc, this, blockCountIndex);
-	}
+    }
     static int determineMultCount(BlockCountRec* bc, block* b, int& blockCountIndex)
     {
         if (b->multCount == 0)
-		{
-			return 0;
-		}
-        for (int i=0;i<blockCountIndex;i++)
+        {
+            return 0;
+        }
+        for (int i = 0; i < blockCountIndex; i++)
         {
             assert(i < MAXBLOCKBUFCOUNT);
-			if (bc[i].b == b)
-			{
-				bc[i].count += 1;
-				return 0;
-			}
-		}
-		bc[blockCountIndex].b = b;
-		bc[blockCountIndex].count = 1;
-		blockCountIndex++;
+            if (bc[i].b == b)
+            {
+                bc[i].count += 1;
+                return 0;
+            }
+        }
+        bc[blockCountIndex].b = b;
+        bc[blockCountIndex].count = 1;
+        blockCountIndex++;
         return
             determineMultCount(bc, b->left, blockCountIndex)
             +
@@ -144,12 +144,12 @@ private:
     }
 
     bool registerBlock()
-	{
+    {
         g_allBlocks.push_back(this);
         block* g_b = g_minBlocks[value];
         if (g_b == nullptr)
         {
-			g_minBlocks[value] = this;
+            g_minBlocks[value] = this;
             g_registerCount += 1;
             return true;
         }
@@ -161,9 +161,9 @@ private:
                 return true;
             }
             else
-				return false;
+                return false;
         }
-	}
+    }
 
     block* left;
     block* right;
@@ -173,7 +173,7 @@ private:
 
 int solve()
 {
-    
+
     block* b1 = new block();
     std::list<block*>* rootBlocks = new std::list<block*>();
     rootBlocks->push_back(b1);
@@ -182,7 +182,7 @@ int solve()
     int prevSum = 0;
     int sum = 0;
 
-	bool done = false;
+    bool done = false;
     while (!done)
     {
         std::list<block*>* newBlocks = block::generateBlocks();
@@ -192,7 +192,7 @@ int solve()
 
         for (int i = 1; i <= MAXVALUE; i++)
         {
-            block *_b = g_minBlocks[i];
+            block* _b = g_minBlocks[i];
             if (_b != nullptr)
                 sum += g_minBlocks[i]->multCount;
         }
