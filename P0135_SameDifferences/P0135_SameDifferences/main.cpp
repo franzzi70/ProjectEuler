@@ -30,81 +30,43 @@
 
 //const int MAX_N = 1'000'000;
 const int THRESHOLD_N = 1000000;
-const int MAX_PRIME = 1'000'100;
-
-std::vector<int> solutionCounts(THRESHOLD_N +1);
 
 __int64 solve()
 {
-    __int64 stepCount = 0;
-    __int64 RangeCount = 0;
-    __int64 prevRangeCount = 0;
-
-    __int64 z = 1;
-    //int maxZ = 1 + (int)round(sqrt(THRESHOLD_N + 1));
-    __int64 maxZ = 1 + THRESHOLD_N;
-    while (z <= maxZ)
-    {
-        __int64 d = 1;
-        __int64 t3 = z * z;
-        while (true)
+	__int64 stepCount = 0;
+	int solutionCount = 0;
+	std::vector<int> countArray(THRESHOLD_N + 1);
+	int foundCount = 0;
+	for (__int64 y = 2; y < THRESHOLD_N; y++)
+	{
+		// y(4a - y) = n
+		// 4ay - y^2 = n
+		// 4*a > y
+		__int64 minA = y / 4 + 1;
+		for (__int64 a = minA; a < y; a++)
 		{
 			stepCount += 1;
-
-			//if (z == 20 && d == 7)
-			//{
-			//	std::cout << 20 << std::endl;
-			//}
-			//int n = (z+2*d)*(z+2*d) - (z+d) * (z+d) - z * z;
-            //int n = z*z + 4*d*z + 4*d*d - (z*z + 2*d*z + d*d) - z*z;
-			//int n = 2*d*z - 3*d*d - z*z;
-            
-			// n= d*d + 2*d*z + z*z - 4*d*d - 2*z*z
-			// n = (d+z)^2 - 4*d*d - 2*z*z
-
-            __int64 t1 = z * 2 * d;
-            __int64 t2 = 3 * d * d;
-
-			//__int64 n = 2 * d * z + 3 * d * d - z * z;
-            __int64 n = t1 + t2 - t3;
-
-            // int n = 2 * z + 3 - z * z;
-			if (n > THRESHOLD_N)
+			__int64 n = y * (4 * a - y);
+			if (n >= THRESHOLD_N)
+			{
 				break;
-            if (n > 0)
-            {
-                solutionCounts[n] += 1;
-                RangeCount += 1;
-            }
-
-			d += 1;
-		}
-
-        if (z % 1000 == 0)
-        {
-            if (z % 10000 == 0)
-            std::cout << "z: " << z << ", RangeCount: "
-                << RangeCount << ", diff: "
-                << RangeCount - prevRangeCount << std::endl;
-
-            if (RangeCount - prevRangeCount == 0)
-                break;
-
-            prevRangeCount = RangeCount;
-        }
-
-        z += 1;
-    }
-	int solutionCount = 0;
-    for (int i=0;i<THRESHOLD_N;i++)
-	{
-		if (solutionCounts[i] == 10)
-		{
-            solutionCount += 1;
+			}
+			if (n > 0)
+			{
+				foundCount += 1;
+				countArray[n] += 1;
+			}
 		}
 	}
-	std::cout << "stepCount: " << stepCount << std::endl;
-    return solutionCount;
+	for (int i = 0; i < THRESHOLD_N; i++)
+	{
+		if (countArray[i] == 10)
+		{
+			solutionCount += 1;
+		}
+	}
+	//std::cout << "stepCount: " << stepCount << std::endl;
+	return solutionCount;
 }
 
 int main()
