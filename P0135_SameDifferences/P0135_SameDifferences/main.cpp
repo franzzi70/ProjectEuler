@@ -1,114 +1,86 @@
 
 #include <iostream>
 #include <chrono>
-#include <cmath>
+#include "primes.h"
 
-// z^2 - y^2 - x^2 = n
-// z^2 - y^2 = n + x^2
-// (z + y)(z - y) = n + x^2
-// x^2 + y^2 = z^2 - n
+// x^2 - y^2 - z^2 = n
+// x - y = y - z = d
+// d > 0
+// n > 0
 
-// x^2 + y^2 = k^2, k=z^2 - n
+// y = z + d
+// x = z + 2d
+// x^2 - y^2 - z^2 = n
+// (z + 2d)^2 - (z + d)^2 - z^2 = n
+// z^2 + 4dz + 4d^2 - z^2 - 2dz - d^2 - z^2 = n
+// 2dz + 3d^2 - z^2 = n
 
-// m*m = n
-// k^2-m^2 = (k+m)(k-m)
-// x^2 - y^2 = (x + y)(x - y)
+// z = y - d
+// x = y + d
+// x^2 - y^2 - (y - d)^2 = n
+// (y + d)^2 - y^2 - (y - d)^2 = n
+// y^2 + 2dy + d^2 - y^2 - y^2 + 2dy - d^2 = n
+// 4dy - y^2 = n    => use for upper boundarary of y
+// 4dy - y^2 - n = 0
+// solutions for y:
+// y = 2*d + sqrt(4d^2-n) => find y for n and d, y must be integer
 
-// (x+k)^2 - x^2 - d = 0
-// x^2 + 2*x*k + k^2 -x^2 - n = 0
-// 2*x*k + k^2 - n = 0
-// 2*x*k + k^2 = n
-// x = (n - k ^ 2) / 2*k
+// 4dy - y^2 = n
+// d = (n+y^2)/4*y
 
-//const int LIMIT = 1'000'000;
-const int LIMIT = 2000;
-
+//const int MAX_N = 1'000'000;
+const int THRESHOLD_N = 1000000;
 
 __int64 solve()
 {
-    __int64 sum = 0;
-    for (int n = 1; n < LIMIT; n++)
-    {
-        int sequenceCount = 0;
-        std::cout << "n: " << n << std::endl;
-  //      if (n==27)
-		//{
-		//	std::cout << "n == 27" << std::endl;
-		//}
-        for (int z = 1; z < LIMIT;z++)
-        {
-			int d = z * z + n;
-
-            //if (z == 6 && n == 27)
-            //{
-            //    std::cout << "n: " << n << " z: " << z << std::endl;
-            //}
-
-            for (int k = 1; k < LIMIT; k++)
-            {
-                int num = d - k * k;
-                int denom = 2 * k;
-                if (num <= 0)
-                    break;
-                if (num % denom != 0)
-                    continue;
-
-                int y = num / denom;
-				int x = y + k;
-                if (y <= z)
-                    continue;
-
-                if (x - y != y - z)
-                    continue;
-                sequenceCount += 1;
-				
-                if (sequenceCount == 10)
-				{
-					std::cout << "n: " << n << " z: " << z << " x: " << x << " y: " << y << std::endl;
-				}
-                // std::cout << "( x: " << x << " y: " << y << " z: " << z << " )" << std::endl;
-            }
-
-            //for (int n = 1; n < LIMIT; n++)
-            //{
-            //    int k = 1;
-            //    int d = d - z * z;
-            //    int num = d - k * k;
-            //    int denom = 2 * k;
-            //    if (num <= 0)
-            //        break;
-            //    if (num % denom != 0)
-            //        continue;
-            //    int y = num / denom;
-            //    int x = y + k;
-
-            //    if (z == 6 && i == 27)
-            //    {
-            //        std::cout << "i: " << i << " z: " << z << std::endl;
-            //    }
-            //}
-        }
-        if (sequenceCount == 10)
-        {
-            // std::cout << "first with 10: " << n << std::endl;
-            std::cout << "has 10 sequences: " << n << std::endl;
-            sum += n;
-        }
-    }
-    return sum;
+	__int64 stepCount = 0;
+	int solutionCount = 0;
+	std::vector<int> countArray(THRESHOLD_N + 1);
+	int foundCount = 0;
+	for (__int64 y = 2; y < THRESHOLD_N; y++)
+	{
+		// y(4a - y) = n
+		// 4ay - y^2 = n
+		// 4*a > y
+		__int64 minA = y / 4 + 1;
+		for (__int64 a = minA; a < y; a++)
+		{
+			stepCount += 1;
+			__int64 n = y * (4 * a - y);
+			if (n >= THRESHOLD_N)
+			{
+				break;
+			}
+			if (n > 0)
+			{
+				foundCount += 1;
+				countArray[n] += 1;
+			}
+		}
+	}
+	for (int i = 0; i < THRESHOLD_N; i++)
+	{
+		if (countArray[i] == 10)
+		{
+			solutionCount += 1;
+		}
+	}
+	//std::cout << "stepCount: " << stepCount << std::endl;
+	return solutionCount;
 }
 
 int main()
 {
 
-    auto t1 = std::chrono::high_resolution_clock::now();
-    __int64 solution = solve();
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    std::cout << "solution: " << solution << std::endl << "duration: " << microSec << " micro seconds (" << ms << " ms)" << std::endl;
-    if (microSec > 300'000'000)
-    {
-        std::cout << "(" << ((float)microSec) / 60'000'000 << " minutes )" << std::endl;
-    }
+	auto t1 = std::chrono::high_resolution_clock::now();
+	__int64 solution = solve();
+	//__int64 solution = solve_notworking();
+	auto t2 = std::chrono::high_resolution_clock::now();
+	auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+	std::cout << "solution: " << solution << std::endl << "duration: " << microSec << " micro seconds (" << ms << " ms)" << std::endl;
+	if (microSec > 300'000'000)
+	{
+		std::cout << "(" << ((float)microSec) / 60'000'000 << " minutes )" << std::endl;
+	}
 }
