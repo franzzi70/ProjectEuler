@@ -4,6 +4,7 @@
 #include <vector>
 #include "primes.h"
 
+
 //  (1) x ^ 2 - y ^ 2 - z ^ 2 = n
 //  If x, y, and z are consecutive terms of an arithmetic progression, then
 //  (2) x ^ 2 - (x - a) ^ 2 - (x - 2a) ^ 2 = n
