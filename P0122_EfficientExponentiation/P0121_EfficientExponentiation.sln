@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.34928.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "P0121_EfficientExponentiation", "P0121_EfficientExponentiation\P0121_EfficientExponentiation.vcxproj", "{54555B68-7133-4524-BD77-5BD034E4E256}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "P0122_EfficientExponentiation", "P0121_EfficientExponentiation\P0121_EfficientExponentiation.vcxproj", "{54555B68-7133-4524-BD77-5BD034E4E256}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
