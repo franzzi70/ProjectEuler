@@ -5,22 +5,8 @@
 
 const bool VERBOSE = false;
 const __int64 TRHESH_PERIMETER = 100000000;
-const __int64 QARR_SIZE = TRHESH_PERIMETER / 2;
 
-__int64 qArr[QARR_SIZE];
 
-void init()
-{
-	qArr[0] = 0;
-	__int64 qNum = 0;
-	__int64 diff = 1;
-	for (__int64 i = 1; i < QARR_SIZE; i++)
-	{
-		qNum += diff;
-		diff += 2;
-		qArr[i] = qNum;
-	}
-}
 
 // a^2 + (b)^2 = c^2
 // (b-a) | c
@@ -51,7 +37,7 @@ void init()
 
 __int64 solve()
 {
-	init();
+	// init();
 	__int64 foundCount = 0;
 	__int64 checkCount = 0;
 
@@ -62,23 +48,20 @@ __int64 solve()
 	// try to get better than 364 ms.
 
 
-	//__int64 seed = 0;
-	//__int64 a = 1;
-	//__int64 b = 2;
+	__int64 diff = 3;
+	__int64 a = 1;
+	__int64 qa = 1;
+	__int64 b = 2;
+	__int64 qb = 4;
 
-	for (__int64 a = 1; a < QARR_SIZE - 1; a++)
+	while (true)
 	{
 		if (VERBOSE)
 			if (a % 1000000 == 0)
 				std::cout << "a: " << a << std::endl;
 
-		__int64 qa = qArr[a];
-		__int64 b = a + 1;
-		int d = 1;
-
 		checkCount += 1;
 
-		__int64 qb = qArr[b];
 		__int64 qc = qa + qb;
 		__int64 c = (__int64)(sqrt(qc) + 0.5);
 		if (c * c == qc)
@@ -96,6 +79,13 @@ __int64 solve()
 		if (VERBOSE)
 			if (checkCount % 1000000 == 0)
 				std::cout << "checkCount: " << checkCount << ", foundCount:" << foundCount << std::endl;
+		
+		a += 1;
+		b += 1;
+		qa = qb;
+		diff += 2;
+		qb += diff;
+
 	}
 	return foundCount;
 }
