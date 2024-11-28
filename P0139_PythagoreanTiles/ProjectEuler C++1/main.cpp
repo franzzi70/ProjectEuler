@@ -3,7 +3,7 @@
 #include <chrono>
 #include <map>
 
-
+const bool VERBOSE = false;
 const __int64 TRHESH_PERIMETER = 100000000;
 const __int64 QARR_SIZE = TRHESH_PERIMETER / 2;
 
@@ -44,8 +44,10 @@ void init()
 // 
 // d^2 * (2a^2/d^2 + 2a/d + 1) = c^2
 // =>
-//	1.) d | 2a
+//	1.) d | 2a => d | a
 //	2.) d <= 2a
+//	3.) d | b
+//	4.) d == 1	-- for principal solutions
 
 __int64 solve()
 {
@@ -57,43 +59,43 @@ __int64 solve()
 	// no triangle with sqrt(3*n) = natural number
 	// as well no triangle with (2*n) = natural number (no rect with a==b)
 
-	for (int a = 1; a < QARR_SIZE - 1; a++)
+	// try to get better than 364 ms.
+
+
+	//__int64 seed = 0;
+	//__int64 a = 1;
+	//__int64 b = 2;
+
+	for (__int64 a = 1; a < QARR_SIZE - 1; a++)
 	{
-		if (a % 1000 == 0)
-			std::cout << "a: " << a << std::endl;
+		if (VERBOSE)
+			if (a % 1000000 == 0)
+				std::cout << "a: " << a << std::endl;
 
 		__int64 qa = qArr[a];
-		for (int b = a + 1; b < QARR_SIZE; b++)
+		__int64 b = a + 1;
+		int d = 1;
+
+		checkCount += 1;
+
+		__int64 qb = qArr[b];
+		__int64 qc = qa + qb;
+		__int64 c = (__int64)(sqrt(qc) + 0.5);
+		if (c * c == qc)
 		{
-			int d = b - a;
-			if (d != 1)
-			{
-				if (d >= a)
-					break;
-			}
+			if (VERBOSE)
+				std::cout << "a: " << a << ", b: " << b << ", c: " << c << std::endl;
 
-			checkCount += 1;
-
-			__int64 qb = qArr[b];
-			__int64 qc = qa + qb;
-			int c = round(sqrt(qc));
-			if (c * c == qc)
-			{
-				//std::cout << "found triangle: a: " << a << " b: " << b << " c: " << c
-				//	<< " (check count : )" << checkCount << std::endl;
-				if (c % (b - a) != 0)
-				{
-					// std::cout << "does not divide." << std::endl;
-					continue;
-				}
-				foundCount += 1;
-			}
-			if (a + b + c >= TRHESH_PERIMETER)
-			{
-				std::cout << "break at a: " << a << " b: " << b << " c: " << c << std::endl;
+			__int64 per = a + b + c;
+			if (per <= TRHESH_PERIMETER)
+				foundCount += (TRHESH_PERIMETER-1) / per;
+			else
 				break;
-			}
 		}
+
+		if (VERBOSE)
+			if (checkCount % 1000000 == 0)
+				std::cout << "checkCount: " << checkCount << ", foundCount:" << foundCount << std::endl;
 	}
 	return foundCount;
 }
