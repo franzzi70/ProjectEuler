@@ -3,7 +3,7 @@
 #include <chrono>
 #include <map>
 
-const bool VERBOSE = false;
+const bool VERBOSE = true;
 const __int64 TRHESH_PERIMETER = 100000000;
 
 
@@ -45,9 +45,6 @@ __int64 solve()
 	// no triangle with sqrt(3*n) = natural number
 	// as well no triangle with (2*n) = natural number (no rect with a==b)
 
-	// try to get better than 364 ms.
-
-
 	__int64 diff = 3;
 	__int64 a = 1;
 	__int64 qa = 1;
@@ -64,16 +61,15 @@ __int64 solve()
 
 		__int64 qc = qa + qb;
 		__int64 c = (__int64)(sqrt(qc) + 0.5);
+		__int64 per = a + b + c;
+		if (per >= TRHESH_PERIMETER)
+			break;
+
 		if (c * c == qc)
 		{
 			if (VERBOSE)
 				std::cout << "a: " << a << ", b: " << b << ", c: " << c << std::endl;
-
-			__int64 per = a + b + c;
-			if (per <= TRHESH_PERIMETER)
-				foundCount += (TRHESH_PERIMETER-1) / per;
-			else
-				break;
+			foundCount += (TRHESH_PERIMETER-1) / per;
 		}
 
 		if (VERBOSE)
@@ -87,6 +83,12 @@ __int64 solve()
 		qb += diff;
 
 	}
+
+	if (VERBOSE)
+	{
+		std::cout << "last a: " << a << ", b: " << b << std::endl;
+	}
+		
 	return foundCount;
 }
 
