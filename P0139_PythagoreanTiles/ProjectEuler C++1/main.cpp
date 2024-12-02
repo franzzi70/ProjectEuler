@@ -3,7 +3,7 @@
 #include <chrono>
 #include <map>
 
-const bool VERBOSE = true;
+const bool VERBOSE = false;
 const __int64 TRHESH_PERIMETER = 100000000;
 
 
