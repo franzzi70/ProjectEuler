@@ -4,24 +4,10 @@
 #include <map>
 #include <cmath>
 
-
+const bool VERBOSE = false;
 const __int64 TRHESH_PERIMETER = 100000000;
-const __int64 QARR_SIZE = TRHESH_PERIMETER / 2;
 
-__int64 qArr[QARR_SIZE];
 
-void init()
-{
-	qArr[0] = 0;
-	unsigned __int64 qNum = 0;
-	unsigned __int64 diff = 1;
-	for (unsigned __int64 i = 1; i < QARR_SIZE; i++)
-	{
-		qNum += diff;
-		diff += 2;
-		qArr[i] = qNum;
-	}
-}
 
 __int64 gcd(unsigned __int64 a, unsigned __int64 b)
 {
@@ -70,23 +56,14 @@ __int64 gcd(unsigned __int64 a, unsigned __int64 b)
 // 
 // d^2 * (2a^2/d^2 + 2a/d + 1) = c^2
 // =>
-//	1.) d | a
-//		=> 2.) d <= a
+//	1.) d | 2a => d | a
+//	2.) d <= 2a
+//	3.) d | b
+//	4.) d == 1	-- for principal solutions
 
 __int64 solve()
 {
-	auto t1 = std::chrono::high_resolution_clock::now();
-	init();
-	auto t2 = std::chrono::high_resolution_clock::now();
-	auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-	std::cout << "duration of init() : " << ms << " milliseconds." << std::endl;
-
-	std::cout << "gcd(12,15) " << gcd(12, 15) << std::endl;
-	std::cout << "gcd(12,16) " << gcd(12, 16) << std::endl;
-	std::cout << "gcd(12,17) " << gcd(12, 17) << std::endl;
-	std::cout << "gcd(12,18) " << gcd(12, 18) << std::endl;
-
+	// init();
 	__int64 foundCount = 0;
 	__int64 checkCount = 0;
 
@@ -94,80 +71,50 @@ __int64 solve()
 	// no triangle with sqrt(3*n) = natural number
 	// as well no triangle with (2*n) = natural number (no rect with a==b)
 
-	//for (int a = 1; a < QARR_SIZE - 1; a++)
-	//{
-	//	if (a % 1000 == 0)
-	//		std::cout << "a: " << a << std::endl;
+	__int64 diff = 3;
+	__int64 a = 1;
+	__int64 qa = 1;
+	__int64 b = 2;
+	__int64 qb = 4;
 
-	//	__int64 qa = qArr[a];
-	//	for (int b = a + 1; b < QARR_SIZE; b++)
-	//	{
-	//		int d = b - a;
-	//		if (d != 1)
-	//		{
-	//			if (d >= a)
-	//				break;
-	//		}
-
-	//		checkCount += 1;
-
-	//		__int64 qb = qArr[b];
-	//		__int64 qc = qa + qb;
-	//		int c = round(sqrt(qc));
-	//		if (c * c == qc)
-	//		{
-	//			//std::cout << "found triangle: a: " << a << " b: " << b << " c: " << c
-	//			//	<< " (check count : )" << checkCount << std::endl;
-	//			if (c % (b - a) != 0)
-	//			{
-	//				// std::cout << "does not divide." << std::endl;
-	//				continue;
-	//			}
-	//			foundCount += 1;
-	//		}
-	//		if (a + b + c >= TRHESH_PERIMETER)
-	//		{
-	//			std::cout << "break at a: " << a << " b: " << b << " c: " << c << std::endl;
-	//			break;
-	//		}
-	//	}
-	//}
-
-	// much too slow suggestion from github copilot:
-	__int64 stepCount = 0;
-	for (__int64 a = 2; a * 3 < TRHESH_PERIMETER; ++a)
+	while (true)
 	{
-		for (__int64 b = 1; b < a; ++b)
+		if (VERBOSE)
+			if (a % 1000000 == 0)
+				std::cout << "a: " << a << std::endl;
+
+		checkCount += 1;
+
+		__int64 qc = qa + qb;
+		__int64 c = (__int64)(sqrt(qc) + 0.5);
+		__int64 per = a + b + c;
+		if (per >= TRHESH_PERIMETER)
+			break;
+
+		if (c * c == qc)
 		{
-			stepCount += 1;
-			if (stepCount % 1000000 == 0)
-			{
-				std::cout << "step count: " << stepCount << " a: " << a << std::endl;
-			}
-			if ((a - b) % 2 == 1 && gcd(a, b) == 1) // m and n must be coprime and one must be even, the other odd
-			{
-				__int64 d = a - b;
-				//__int64 t = 2 * a * b;
-				__int64 qS = a * a + b * b;
-				__int64 c = round(sqrt(qS));
-				if (c * c != qS)
-					continue;
-
-				__int64 per = a + b + c;
-				if (per >= TRHESH_PERIMETER)
-					break;
-
-				if (c % d == 0)
-				{
-
-					std::cout << "found triangle: a: " << a << " b: " << b << " c: " << c << " per: " << per << std::endl;
-					foundCount += (TRHESH_PERIMETER / per);
-				}
-			}
+			if (VERBOSE)
+				std::cout << "a: " << a << ", b: " << b << ", c: " << c << std::endl;
+			foundCount += (TRHESH_PERIMETER-1) / per;
 		}
+
+		if (VERBOSE)
+			if (checkCount % 1000000 == 0)
+				std::cout << "checkCount: " << checkCount << ", foundCount:" << foundCount << std::endl;
+		
+		a += 1;
+		b += 1;
+		qa = qb;
+		diff += 2;
+		qb += diff;
+
 	}
 
-	std::cout << "step count: " << stepCount << std::endl;
+	if (VERBOSE)
+	{
+		std::cout << "last a: " << a << ", b: " << b << std::endl;
+	}
+		
 	return foundCount;
 }
 
