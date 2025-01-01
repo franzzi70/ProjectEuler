@@ -5,18 +5,18 @@
 #include <cmath>
 
 const bool VERBOSE = false;
-const __int64 TRHESH_PERIMETER = 100000000;
+const int64_t TRHESH_PERIMETER = 100000000;
 
 
 
-__int64 gcd(unsigned __int64 a, unsigned __int64 b)
+int64_t gcd(uint64_t a, uint64_t b)
 {
-	unsigned __int64 _a = a;
-	unsigned __int64 _b = b;
+	uint64_t _a = a;
+	uint64_t _b = b;
 
 	while (_a != 0)
 	{
-		unsigned __int64 _tmp = _a;
+		uint64_t _tmp = _a;
 		_a = _b % _a;
 		_b = _tmp;
 	}
@@ -61,21 +61,21 @@ __int64 gcd(unsigned __int64 a, unsigned __int64 b)
 //	3.) d | b
 //	4.) d == 1	-- for principal solutions
 
-__int64 solve()
+int64_t solve()
 {
 	// init();
-	__int64 foundCount = 0;
-	__int64 checkCount = 0;
+	int64_t foundCount = 0;
+	int64_t checkCount = 0;
 
 	// first all of the from b = 2a
 	// no triangle with sqrt(3*n) = natural number
 	// as well no triangle with (2*n) = natural number (no rect with a==b)
 
-	__int64 diff = 3;
-	__int64 a = 1;
-	__int64 qa = 1;
-	__int64 b = 2;
-	__int64 qb = 4;
+	int64_t diff = 3;
+	int64_t a = 1;
+	int64_t qa = 1;
+	int64_t b = 2;
+	int64_t qb = 4;
 
 	while (true)
 	{
@@ -85,9 +85,9 @@ __int64 solve()
 
 		checkCount += 1;
 
-		__int64 qc = qa + qb;
-		__int64 c = (__int64)(sqrt(qc) + 0.5);
-		__int64 per = a + b + c;
+		int64_t qc = qa + qb;
+		int64_t c = (int64_t)(sqrt(qc) + 0.5);
+		int64_t per = a + b + c;
 		if (per >= TRHESH_PERIMETER)
 			break;
 
@@ -122,7 +122,7 @@ int main()
 {
 
 	auto t1 = std::chrono::high_resolution_clock::now();
-	__int64 solution = solve();
+	int64_t solution = solve();
 	auto t2 = std::chrono::high_resolution_clock::now();
 	auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
