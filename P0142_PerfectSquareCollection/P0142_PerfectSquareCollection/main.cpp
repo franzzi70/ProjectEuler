@@ -12,136 +12,85 @@
 // x > y > z > 0
 // x+y, x-y, x+z, x-z, y+z, y-z are all perfect squares
 
-// for wolfram alpha
-// a*a=x+y,b*b=x-y,c*c=x+z,d*d=x-z,e*e=y+z,f*f=y-z,x>y>z>0,x+y+z=k
-
-// wolfram alpha output:
-// a > 0, 0 < b < a, sqrt(2)/2 * sqrt(a ^ 2 + b ^ 2) < c < a,
-// d = sqrt(a ^ 2 + b ^ 2 - c ^ 2), e = sqrt(c ^ 2 - b ^ 2),
-// f = sqrt(a ^ 2 - c ^ 2),
-// k=(a ^ 2 - b ^ 2 + 2 c ^ 2) / 2,
-// x=(a ^ 2 + b ^ 2) / 2,
-// y=(a ^ 2 - b ^ 2) / 2,
-// z=(-a ^ 2 - b ^ 2 + 2 c ^ 2) / 2
-// 
-// 
-// k = (a^2 - b^2 + 2 c^2) / 2,
-// x = (a^2 + b^2) / 2,
-// y = (a^2 - b^2) / 2,
-// z = (-a^2 - b^2 + 2 c^2) / 2
-
 // additional considerations:
 // check: 2|z, and 2|y, because two different perfect square numbers with same parity have distance divisible by 4
 
-const int QARRSIZE = 10'000'000;
+const int MAXN = 1'000'000;
 //int64_t sqArr[QARRSIZE];
-std::vector<int64_t> sqArr(QARRSIZE);
 
-void init()
-{
-	//sqArr[0] = 0;
-	//int l = 1;
-	//int64_t sq = 0;
-	//for (int i = 1; i < QARRSIZE; i++)
-	//{
-	//	sq += l;
-	//	sqArr[i] = sq;
-	//	l += 2;
-	//}
-	for (int i = 1; i < QARRSIZE; i++)
-	{
-		sqArr[i] = i * i;
-	}
-}
 
-void test()
-{
-
-	int sq_a = 400;
-	int sq_b = 144;
-	int sq_c = 121;
-
-	int x = (sq_a + sq_b) / 2;
-	int y = (sq_a - sq_b) / 2;
-	int z = (2 * sq_c - sq_b - sq_a) / 2;
-
-	double testC = sqrt(2) * sqrt(sq_a + sq_b) / 2;
-
-	std::cout << "x: " << x << " y: " << y << " x+y: " << x + y << " x-y:" << x - y << std::endl;
-	std::cout << "z: " << z << " x+z: " << x + z << " x-z:" << x - z << std::endl;
-	std::cout << " y+z: " << y + z << " y-z:" << y - z << std::endl;
-	std::cout << "testC: " << testC << " c: " << sqrt(x + z) << std::endl;
-}
-
-std::map<int, std::list<std::pair<int, int>>> zMap;
+std::map<int, std::list<std::pair<int, int>>> matchMap;
 
 int64_t solve()
+// different approach: find x first.
 {
-	test();
-	init();
-
 	int testCount = 0;
 	int cand_sum = 256 * 256 * 256 * 127;
 
 
-	for (int threshN = 1; threshN < QARRSIZE; threshN += 1)
+	for (int threshN = 2; threshN < MAXN; threshN += 1)
 	{
 		int testSq = threshN * threshN;
-		int startZSeed = 2 - (threshN & 1);
-		for (int zSeed = startZSeed; zSeed < threshN; zSeed += 1)
+		int startMSeed = 2 - (threshN & 1);
+		//int startMSeed = 1;
+		for (int mSeed = startMSeed; mSeed < threshN; mSeed += 2)
 		{
-			int d = testSq - zSeed * zSeed;
-			if (zMap.count(d) == 0)
+			int mSeedSq = mSeed * mSeed;
+			int d = testSq - mSeed * mSeed;
+			int m = (testSq + mSeedSq) / 2;
+			if (matchMap.count(m) == 0)
 			{
 				std::list<std::pair<int, int>> zList;
-				zList.push_back(std::pair<int, int>(threshN, zSeed));
-				zMap.insert(std::make_pair(d, zList));
-				// zMap.insert(std::pair<int, std::list<std::pair<int, int>>>(zSeed, std::list<std::pair<int, int>>()));
+				zList.push_back(std::pair<int, int>(threshN, mSeed));
+				matchMap.insert(std::make_pair(m, zList));
 			}
 			else
 			{
-				std::list<std::pair<int, int>> zList = zMap.find(d)->second;
+				std::list<std::pair<int, int>> zList = matchMap.find(m)->second;
 				for (std::pair<int, int> it : zList)
 				{
 
-					int z = d / 2;
-					int y = it.first * it.first - z;
-					int x = testSq - z;
+					int y = d / 2;
+					int z = (it.first * it.first - it.second * it.second) / 2;
+					int x = testSq - y;
 
 					testCount += 1;
 					if (testCount % 10'000'000 == 0)
 					{
-						std::cout << "testCount: " << testCount << " threshN: " << threshN << " zSeed: " << zSeed << std::endl;
+						std::cout << "testCount: " << testCount << " threshN: " << threshN << " zSeed: " << mSeed << std::endl;
 						std::cout << "x: " << x << " y: " << y << " z: " << z << " x+y+z: " << x + y + z << std::endl;
 					}
 
-					if (y % 2 == 0)
+					//if (y % 2 == 0)
+					//{
+						// test if x-z is perfect square
+					int testSq1 = (int)(sqrt(y - z) + 0.1);
+					if (testSq1 * testSq1 == y - z)
 					{
-						// test if x-y is perfect square
-						int testSq1 = (int)(sqrt(x - y) + 0.1);
-						if (testSq1 * testSq1 == x - y)
+							// test if y+z is perfect square
+						int testSq2 = (int)(sqrt(y + z) + 0.1);
+						if (testSq2 * testSq2 == y + z)
 						{
-							int testSq2 = (int)(sqrt(x + y) + 0.1);
-							if (testSq2 * testSq2 == x + y)
+							int sum_xyz = x + y + z;
+							if (sum_xyz < cand_sum)
 							{
-								int sum_xyz = x + y + z;
-								if (sum_xyz < cand_sum)
-								{
-									std::cout << "FOUND: " << sum_xyz << " x: " << x << " y: " << y << " z: " << z << " x+y+z: " << x + y + z << std::endl;
-									//return sum_xyz;
-									cand_sum = sum_xyz;
-								}
+								std::cout << "FOUND: " << sum_xyz << " x: " << x << " y: " << y << " z: " << z << " x+y+z: " << x + y + z << std::endl;
+								return sum_xyz;
+								//cand_sum = sum_xyz;
 							}
 						}
 					}
+					//}
 				}
-				zList.push_back(std::pair<int, int>(threshN, zSeed));
+				zList.push_back(std::pair<int, int>(threshN, mSeed));
 			}
 		}
 	}
 
 	return 0;
 }
+
+
 int main()
 {
 
