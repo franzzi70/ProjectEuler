@@ -16,18 +16,12 @@
 // check: 2|z, and 2|y, because two different perfect square numbers with same parity have distance divisible by 4
 
 const int MAXN = 1'000'000;
-//int64_t sqArr[QARRSIZE];
-
 
 std::map<int, std::list<std::pair<int, int>>> matchMap;
 
 int64_t solve()
 // different approach: find x first.
 {
-	int testCount = 0;
-	int cand_sum = 256 * 256 * 256 * 127;
-
-
 	for (int threshN = 2; threshN < MAXN; threshN += 1)
 	{
 		int testSq = threshN * threshN;
@@ -54,16 +48,7 @@ int64_t solve()
 					int z = (it.first * it.first - it.second * it.second) / 2;
 					int x = testSq - y;
 
-					testCount += 1;
-					if (testCount % 10'000'000 == 0)
-					{
-						std::cout << "testCount: " << testCount << " threshN: " << threshN << " zSeed: " << mSeed << std::endl;
-						std::cout << "x: " << x << " y: " << y << " z: " << z << " x+y+z: " << x + y + z << std::endl;
-					}
-
-					//if (y % 2 == 0)
-					//{
-						// test if x-z is perfect square
+					// test if x-z is perfect square
 					int testSq1 = (int)(sqrt(y - z) + 0.1);
 					if (testSq1 * testSq1 == y - z)
 					{
@@ -72,21 +57,15 @@ int64_t solve()
 						if (testSq2 * testSq2 == y + z)
 						{
 							int sum_xyz = x + y + z;
-							if (sum_xyz < cand_sum)
-							{
-								std::cout << "FOUND: " << sum_xyz << " x: " << x << " y: " << y << " z: " << z << " x+y+z: " << x + y + z << std::endl;
-								return sum_xyz;
-								//cand_sum = sum_xyz;
-							}
+							std::cout << "FOUND: " << sum_xyz << " x: " << x << " y: " << y << " z: " << z << " x+y+z: " << x + y + z << std::endl;
+							return sum_xyz;
 						}
 					}
-					//}
 				}
 				zList.push_back(std::pair<int, int>(threshN, mSeed));
 			}
 		}
 	}
-
 	return 0;
 }
 
