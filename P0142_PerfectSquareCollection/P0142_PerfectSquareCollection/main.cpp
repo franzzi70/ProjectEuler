@@ -52,7 +52,7 @@ int64_t solve()
 					int testSq1 = (int)(sqrt(y - z) + 0.1);
 					if (testSq1 * testSq1 == y - z)
 					{
-							// test if y+z is perfect square
+						// test if y+z is perfect square
 						int testSq2 = (int)(sqrt(y + z) + 0.1);
 						if (testSq2 * testSq2 == y + z)
 						{
