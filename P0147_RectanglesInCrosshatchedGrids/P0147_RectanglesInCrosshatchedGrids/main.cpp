@@ -50,7 +50,7 @@ int getCount(int x, int y, bool addSubCounts = true)
 			}
 			// CornerOnCenter
 			int w2 = 1 + w / 2 + h / 2;
-			int h2 = (w + h + 2) / 2;	// hier weiter
+			int h2 = (w + h + 2) / 2;
 			if (w2 <= X && h2 <= Y)
 			{
 				int d2 = (X - w2 + 1) * (Y - h2 + 1);
