@@ -94,19 +94,9 @@ int64_t solve()
 
 int main()
 {
-
-	int64_t orderVal = 0;	// to prevent compiler optimization from reordering solve() and time measurement
 	auto t1 = std::chrono::high_resolution_clock::now();
-	orderVal += (int64_t)t1.time_since_epoch().count();
-	int64_t solution = solve();
-	orderVal += solution;
-	if (solution < 0)
-	{
-		return 0;
-	}
+	volatile int64_t solution = solve();
 	auto t2 = std::chrono::high_resolution_clock::now();
-	orderVal += (int64_t)t2.time_since_epoch().count();
-
 	auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
 	std::cout << "solution: " << solution << std::endl << "duration: " << microSec << " micro seconds (" << ms << " ms)" << std::endl;
@@ -117,4 +107,28 @@ int main()
 #ifdef COUNT_STEPS
 	std::cout << "step count: " << g_stepCount << std::endl;
 #endif
+
+
+//	int64_t orderVal = 0;	// to prevent compiler optimization from reordering solve() and time measurement
+//	auto t1 = std::chrono::high_resolution_clock::now();
+//	orderVal += (int64_t)t1.time_since_epoch().count();
+//	int64_t solution = solve();
+//	orderVal += solution;
+//	if (solution < 0)
+//	{
+//		return 0;
+//	}
+//	auto t2 = std::chrono::high_resolution_clock::now();
+//	orderVal += (int64_t)t2.time_since_epoch().count();
+//
+//	auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+//	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+//	std::cout << "solution: " << solution << std::endl << "duration: " << microSec << " micro seconds (" << ms << " ms)" << std::endl;
+//	if (microSec > 300'000'000)
+//	{
+//		std::cout << "(" << ((float)microSec) / 60'000'000 << " minutes )" << std::endl;
+//	}
+//#ifdef COUNT_STEPS
+//	std::cout << "step count: " << g_stepCount << std::endl;
+//#endif
 }
