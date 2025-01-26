@@ -44,6 +44,7 @@ int64_t solve()
 		// std::cout << "side len:" << sidelen << std::endl;
 		for (int i = 0; i <= TRIANGLE_FIELD_SIDELEN - sidelen; i++)
 		{
+			int64_t row_sum = 0;
 			for (int j = 0; j <= i; j++)
 			{
 				int64_t prevSum = triangleMem[triangleRowsStarts[i] + j];
@@ -51,11 +52,21 @@ int64_t solve()
 
 				if (sidelen > 1)
 				{
-					int rowStartIx = triangleRowsStarts[i+sidelen-1] + j;
-					for (int k = 0; k < sidelen; k++)
+					int rowStartIx = triangleRowsStarts[i + sidelen - 1] + j;
+
+					// calculate row sum fully for the first row, then just add the last element and subtract the first
+					if (j == 0)
 					{
-						triangleSum += triangleField[rowStartIx + k];
+						for (int k = 0; k < sidelen; k++)
+						{
+							row_sum += triangleField[rowStartIx + k];
+						}
 					}
+					else
+					{
+						row_sum += triangleField[rowStartIx + sidelen - 1] - triangleField[rowStartIx - 1];
+					}
+					triangleSum += row_sum;
 					if (triangleSum < min_sum)
 					{
 						min_sum = triangleSum;
@@ -63,7 +74,6 @@ int64_t solve()
 					triangleMem[triangleRowsStarts[i] + j] = triangleSum;
 				}
 			}
-
 		}
 	}
 	// -271248680
