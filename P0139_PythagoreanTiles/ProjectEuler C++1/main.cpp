@@ -9,19 +9,19 @@ const int64_t TRHESH_PERIMETER = 100000000;
 
 
 
-int64_t gcd(uint64_t a, uint64_t b)
-{
-	uint64_t _a = a;
-	uint64_t _b = b;
-
-	while (_a != 0)
-	{
-		uint64_t _tmp = _a;
-		_a = _b % _a;
-		_b = _tmp;
-	}
-	return _b;
-}
+//int64_t gcd(uint64_t a, uint64_t b)
+//{
+//	uint64_t _a = a;
+//	uint64_t _b = b;
+//
+//	while (_a != 0)
+//	{
+//		uint64_t _tmp = _a;
+//		_a = _b % _a;
+//		_b = _tmp;
+//	}
+//	return _b;
+//}
 
 // a^2 + (b)^2 = c^2
 // (b-a) | c
