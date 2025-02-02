@@ -7,9 +7,6 @@
 //#define VERBOSE
 //#undef VERBOSE
 
-const int FIELDSIZE = 0x2000;
-std::vector<int64_t> arr(16 * FIELDSIZE, 0);
-
 int reduce(int sheet)
 {
 	switch (sheet)
@@ -27,18 +24,24 @@ int reduce(int sheet)
 	}
 }
 
-int test_walk(int config)
+int process_sheet(int content, int sheet)
+{
+	return content - sheet + reduce(sheet);
+}
+
+int test_step(int config)
 {
 	if ((config & 0xF000) != 0)
-		return config - 0x1000 + reduce(0x1000);
+		return process_sheet(config, 0x1000);
 	if ((config & 0xF00) != 0)
-		return config - 0x100 + reduce(0x100);
+		return process_sheet(config, 0x100);
 	if ((config & 0xF0) != 0)
-		return config - 0x10 + reduce(0x10);
+		return process_sheet(config, 0x10);
 	if ((config & 0x0F) != 0)
-		return config - 1 + reduce(0x1);
+		return process_sheet(config, 0x1);
 	return 0;
 }
+
 
 void test()
 {
@@ -52,44 +55,8 @@ void test()
 #endif
 		i += 1;
 	} while (
-		(content = test_walk(content)) != 0
+		(content = test_step(content)) != 0
 		);
-}
-
-void generate(int batchNo, int content, int64_t mult = 1)
-{
-	// print parameters
-#ifdef VERBOSE
-	std::string str = std::format("0x{:04X}", content);
-	std::cout << batchNo << " " << str << " " << mult << std::endl;
-#endif
-
-	int resultStart = (batchNo)*FIELDSIZE;
-	int rest = content;
-	const int posMask[4] = { 1, 0x10, 0x100, 0x1000 };
-
-	for (int pos = 0; pos < 4; pos++)
-	{
-		int digit = rest & 0xF;
-		rest >>= 4;
-		if (digit != 0)
-		{
-			int sheet = posMask[pos];
-			int newContent = content - sheet + reduce(sheet);
-			int64_t newMult = mult * digit;
-			arr[resultStart + newContent] += newMult;
-
-			if (newContent > 1)
-			{
-				generate(batchNo + 1, newContent, newMult);
-			}
-			//else
-			//{
-			//	std::cout << "batch: " << batchNo << std::endl;
-			//}
-		}
-	}
-
 }
 
 bool is_one_sheet(int content)
@@ -107,60 +74,82 @@ bool is_one_sheet(int content)
 	return false;
 }
 
-double analyze()
+std::vector<int64_t> ones_paths(16, 0);
+int64_t _rec_terminate_count = 0;
+void generate(int batchNo = 2, int content = 0x1111, int64_t mult = 1, int one_count = 0)
 {
-	std::cout << "analyze" << std::endl;
-	int64_t overall_count = 0;
-	int64_t one_sheet_count = 0;
-	double expectation_one = 0;
 
-	for (int batch = 2; batch <= 15; batch++)
+	// print parameters
+#ifdef VERBOSE
+	std::string str = std::format("0x{:04X}", content);
+	std::cout << batchNo << " " << str << " " << mult << std::endl;
+#endif
+
+	//int resultStart = (batchNo)*FIELDSIZE;
+	int rest = content;
+	const int posMask[4] = { 1, 0x10, 0x100, 0x1000 };
+	bool is_one = is_one_sheet(content);
+	int new_OneCount = one_count + (is_one ? 1 : 0);
+
+	for (int pos = 0; pos < 4; pos++)
 	{
-		int64_t batch_overall_count = 0;
-		int64_t batch_one_sheet_count = 0;
-
-		int fieldStartIx = (batch - 1) * FIELDSIZE;
-		for (int i = 0; i < FIELDSIZE; i++)
+		int digit = rest & 0xF;
+		rest >>= 4;
+		if (digit != 0)
 		{
-			int64_t mult = arr[fieldStartIx + i];
-			if (mult != 0)
-			{
-				overall_count += mult;
-				batch_overall_count += mult;
+			int sheet = posMask[pos];
+			int newContent = process_sheet(content, sheet);
+			int64_t newMult = mult * digit;
 
-				std::string str = std::format("0x{:04X}", i);
-				std::cout << batch << " " << str << " " << mult << std::endl;
-				if (is_one_sheet(i))
-				{
-					one_sheet_count += mult;
-					batch_one_sheet_count += mult;
-					std::cout << "************" << std::endl;
-				}
+			if (newContent > 1)
+			{
+				generate(batchNo + 1, newContent, newMult, new_OneCount);
+			}
+			else
+			{
+				ones_paths[new_OneCount] += mult;
+				_rec_terminate_count += 1;
+				// std::cout << "batch: " << batchNo << std::endl;
 			}
 		}
-
-		expectation_one += one_sheet_count / (double)batch_overall_count;
 	}
+}
+
+double analyze()
+{
+	double expectation_one = 0;
+
+	int total_path_sum = 0;
+	int total_path_count = 0;
+	for (int ones_count = 0; ones_count < ones_paths.size(); ones_count++)
+	{
+		int64_t val = ones_paths[ones_count];
+		if (val != 0)
+		{
+			total_path_count += val;
+			total_path_sum += ones_count * val;
+		}
+	}
+	expectation_one = total_path_sum / (double)total_path_count;
 
 	return expectation_one;
 }
 
-int64_t solve()
+std::string solve()
 {
 	test();
-	arr[FIELDSIZE + 0x1111] = 1;
-	generate(2, 0x1111);
+	generate();
 	double rate = analyze();
 	std::string rate_string = std::format("{:.6f}", rate);
 	std::cout << "rate:" << rate_string << std::endl;
-	return 0;
+	return rate_string;
 }
 
 
 int main()
 {
 	auto t1 = std::chrono::high_resolution_clock::now();
-	int64_t solution = solve();
+	std::string solution = solve();
 	auto t2 = std::chrono::high_resolution_clock::now();
 	auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
