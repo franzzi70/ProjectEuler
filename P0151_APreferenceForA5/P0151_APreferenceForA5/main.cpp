@@ -3,9 +3,47 @@
 #include <chrono>
 #include <vector>
 #include <format>
+#include <map>
 
 //#define VERBOSE
 //#undef VERBOSE
+
+typedef std::map<int64_t, int64_t> mapType;
+
+mapType m;
+
+void mapValue(mapType& m, int64_t key, int64_t value)
+{
+	if (m.find(key) == m.end())
+	{
+		m[key] = value;
+	}
+	else
+	{
+		m[key] += value;
+	}
+}
+
+int64_t generateMapKey(int batchNo, int content, int oneCount)
+{
+	return (((int64_t)batchNo) << 36) + (((int64_t)oneCount) << 32) + content;
+}
+
+void printMap(std::map<int64_t, int64_t>& m)
+{
+	for (auto const& [key, val] : m)
+	{
+		int content = key & 0xFFFFFFFF;
+		int batchNo = key >> 36;
+		int oneCount = (key >> 32) & 0xF;
+
+		std::cout
+			<< std::format("{:2}", batchNo)
+			<< " " << std::format("{:1}", oneCount)
+			<< " " << std::format("0x{:04X}", content)
+			<< " " << std::format("{:10}", val) << std::endl;
+	}
+}
 
 int reduce(int sheet)
 {
@@ -78,6 +116,7 @@ std::vector<int64_t> ones_paths(16, 0);
 int64_t _rec_terminate_count = 0;
 void generate(int batchNo = 2, int content = 0x1111, int64_t mult = 1, int one_count = 0)
 {
+	mapValue(m, generateMapKey(batchNo, content, one_count), mult);
 
 	// print parameters
 #ifdef VERBOSE
@@ -119,8 +158,9 @@ double analyze()
 {
 	double expectation_one = 0;
 
-	int total_path_sum = 0;
-	int total_path_count = 0;
+	int64_t total_path_sum = 0;
+	int64_t total_path_count = 0;
+
 	for (int ones_count = 0; ones_count < ones_paths.size(); ones_count++)
 	{
 		int64_t val = ones_paths[ones_count];
@@ -139,8 +179,10 @@ std::string solve()
 {
 	test();
 	generate();
+	printMap(m);
 	double rate = analyze();
 	std::string rate_string = std::format("{:.6f}", rate);
+
 	std::cout << "rate:" << rate_string << std::endl;
 	return rate_string;
 }
