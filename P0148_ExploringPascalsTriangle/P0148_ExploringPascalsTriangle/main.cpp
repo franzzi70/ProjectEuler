@@ -3,6 +3,7 @@
 #include <chrono>
 #include <vector>
 
+uint32_t nRowCount(uint32_t n, uint32_t factor, bool invert);
 
 const uint32_t MAX_N = 999'999'999;
 const uint32_t FACTOR = 7;
@@ -59,7 +60,96 @@ uint32_t testNRowCount(uint32_t n, uint32_t factor, bool inverse = true)
 		count;
 }
 
-int32_t initVectorDigits(std::vector<int32_t>& digits, int32_t n, int32_t factor)
+const uint32_t LEVELS = 11;
+uint64_t nRowsCount(uint32_t rows, uint32_t factor, bool invert = true)
+{
+	uint32_t a_factorPow[LEVELS];
+	uint32_t a_digits[LEVELS];
+	uint32_t a_count[LEVELS];
+	uint32_t ix_high = 0;
+
+	uint32_t scalef = 1;
+	for (uint32_t i = 0; i < LEVELS; i++)
+	{
+		a_digits[i] = 0;
+		a_count[i] = 0;
+		a_factorPow[i] = scalef;
+		scalef *= FACTOR;
+	}
+
+
+	int64_t sum = 0;
+
+	for (uint32_t n = 0; n < rows; n++)
+	{
+
+		//if (n < factor)
+		//{
+		//	sum += invert ?
+		//		n + 1 :
+		//		0;
+		//}
+
+		for (uint32_t i = 0; i < LEVELS; i++)
+		{
+			a_count[i] = 0;
+		}
+
+		//uint32_t ix_high = initVectorDigits(v_digits, n, factor);
+		//if (n == 49)
+		//{
+		//	// checkpoint;
+		//	std::cout << "n==49";
+		//}
+
+		for (uint32_t ix = ix_high; ix > 0; ix--)
+		{
+			uint32_t f = a_digits[ix] + a_count[ix];
+			int32_t pow = a_factorPow[ix];
+			int32_t fCount = pow - (n % pow) - 1;
+			a_count[0] += f * fCount;
+			for (uint32_t il = ix - 1; il > 0; il--)
+			{
+				a_count[il] += f * a_digits[il];
+			}
+		}
+		int64_t count = a_count[0];
+
+
+		//int64_t test_count = testNRowCount(n, 7, false);
+		//int64_t prob_count = nRowCount(n, 7, false);
+		//if (count != test_count)
+		//{
+		//	std::cout << "mismatch for n = " << n << " : expected: " << test_count << " , but value: " << (int)count << std::endl;
+		//}
+		//if (count != prob_count)
+		//{
+		//	std::cout << "mismatch2 for n = " << n << " : expected: " << test_count << " , but value: " << (int)count << std::endl;
+		//}
+
+		sum += invert ?
+			n + 1 - count :
+			count;
+
+		// update a_digit array with next number n
+		bool carry = false;
+		uint32_t inc_ix=0;
+		uint32_t d = a_digits[inc_ix] +1;
+		a_digits[inc_ix] = d > 6 ? 0 : d;
+		while (d == factor)
+		{
+			inc_ix += 1;
+			d = a_digits[inc_ix] + 1;
+			a_digits[inc_ix] = d > 6 ? 0 : d;
+		}
+		if (inc_ix > ix_high)
+			ix_high = inc_ix;
+	}
+
+	return sum;
+}
+
+int32_t initVectorDigits(std::vector<uint32_t>& digits, int32_t n, int32_t factor)
 {
 	int rest = n;
 	int ix = 0;
@@ -81,19 +171,13 @@ uint32_t nRowCount(uint32_t n, uint32_t factor, bool invert = true)
 			n + 1 :
 			0;
 	}
-	if (n == 105)
-		// checkpoint
-	{
-		std::cout << "nRowCount(" << n << "," << factor << ")" << std::endl;
-	}
 
-	std::vector<int32_t> v_digits(g_levels, 0);
-	std::vector<int64_t> v_count(g_levels, 0);
+	std::vector<uint32_t> v_digits(g_levels, 0);
+	std::vector<uint32_t> v_count(g_levels, 0);
 	int32_t ix_high = initVectorDigits(v_digits, n, factor);
 
 
 	uint32_t upper_count = 0;
-	uint64_t f_accum = 1;
 
 	for (uint32_t ix = ix_high ; ix > 0; ix--)
 	{
@@ -106,7 +190,7 @@ uint32_t nRowCount(uint32_t n, uint32_t factor, bool invert = true)
 			v_count[il] += f * v_digits[il];
 		}
 	}
-	int64_t count = v_count[0];
+	int32_t count = v_count[0];
 	return invert ?
 		n + 1 - count :
 		count;
@@ -125,9 +209,12 @@ void test()
 	//{ int f = 7, n = 7;  std::cout << "testNRowCount(" << n << "," << f << ") = " << testNRowCount(n, f) << " inverse: " << testNRowCount(n, f, false) << std::endl; }
 	//{ int f = 7, n = 8;  std::cout << "testNRowCount(" << n << "," << f << ") = " << testNRowCount(n, f) << " inverse: " << testNRowCount(n, f, false) << std::endl; }
 
+	uint64_t nCount = 0;
+
+	/*
+	
 	bool inverse = false;
 
-    uint64_t nCount = 0;
 	for (uint32_t n = 0; n < 10000; ++n)
 	{
 		int64_t probNCount = nRowCount(n,7, inverse);
@@ -138,21 +225,38 @@ void test()
 			std::cout << "mismatch for n = " << n << " : expected: " << testCount << " , but value: " << (int)probNCount << std::endl;
 		}
 	}
-	std::cout << "nCount: " << nCount << std::endl;
+
+	*/
+
+	//const int32_t row_count = 100;
+	//const int32_t row_count = 100'000;
+	//const int32_t row_count = 10'000'000;
+	//const int32_t row_count = 100'000'000;
+	const int32_t row_count = 1'000'000'000;
+
+	//for (uint32_t n = 0; n < row_count; ++n)
+	//{
+	//	int64_t probNCount = nRowCount(n, 7);
+	//	nCount += probNCount;
+	//}
+	//std::cout << "nCount: " << nCount << std::endl;
+	
+	int64_t countnRows = nRowsCount(row_count, 7);
+	std::cout << "nRowsCount: " << countnRows << std::endl;
+
 }
 
 int64_t solve()
 {
-	init();
-    test();
-    return 0;
+    return nRowsCount(1'000'000'000, 7);
+	// 2129970655314432
 }
 
 int main()
 {
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    int64_t solution = solve();
+    volatile int64_t solution = solve();
     auto t2 = std::chrono::high_resolution_clock::now();
     auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
