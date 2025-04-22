@@ -1,492 +1,268 @@
 
 #include <iostream>
 #include <chrono>
-#include <fstream>
 #include <vector>
 
+uint32_t nRowCount(uint32_t n, uint32_t factor, bool invert);
 
-const bool VERBOSE1 = false;
-const bool VERBOSE2 = false;
-const bool VERBOSE3 = true;
-const bool NO_FILEWRITE = true;
-const int MAX_ROW_NUM = 1'000'000'000;
+const uint32_t MAX_N = 999'999'999;
+const uint32_t FACTOR = 7;
+uint32_t g_levels = 0;
+std::vector<int> g_factorPow;
 
-uint64_t fac(uint64_t n)
+void init()
 {
-	uint64_t result = 1;
-	for (uint64_t i = 1; i <= n; i++)
+	uint32_t f = 1;
+	uint32_t fp = f * FACTOR;
+	uint32_t ix = 0;
+	g_factorPow.push_back(1);
+	while (fp < MAX_N)
 	{
-		result *= i;
+		g_factorPow.push_back(fp);
+		f = fp;
+		fp = f * FACTOR;
+		ix++;
 	}
-	return result;
-}
-
-uint64_t factorCountOfFactorial(uint64_t n, uint32_t f)
-{
-	int64_t f_pow = f;
-	int64_t f_count = 0;
-	while (f_pow <= n)
-	{
-		f_count += n / f_pow;
-		f_pow *= f;
-	}
-	return f_count;
+	g_levels = ix + 1;
 }
 
 
-uint64_t checkFactorCount(uint64_t n, uint64_t f)
+int factorInFactorial(uint32_t fac, uint32_t factor)
 {
-	uint64_t count = 0;
-	uint64_t r = n;
-	while (r % f == 0)
-	{
-		r /= f;
-		count += 1;
-	}
+    uint32_t cmp = factor;
+	uint32_t count = 0;
+    while (cmp <= fac)
+    {
+		count += fac / cmp;
+		cmp *= factor;
+    }
 	return count;
 }
 
 
-//int64_t oneCount() {
-//	if (m_row_num < m_factor) {
-//		return 0; // No numbers divisible by 7 in rows smaller than the factor
-//	}
-//
-//	int64_t count = 0;
-//
-//	// Iterate over all entries in the row
-//	for (int k = 0; k <= m_row_num; k++) {
-//		int n = m_row_num;
-//		int current_k = k;
-//		bool divisible = false;
-//
-//		// Apply Lucas' Theorem: Check base-7 digits of n and k
-//		while (n > 0 || current_k > 0) {
-//			int n_digit = n % m_factor;
-//			int k_digit = current_k % m_factor;
-//
-//			if (k_digit > n_digit) {
-//				divisible = true;
-//				break;
-//			}
-//
-//			n /= m_factor;
-//			current_k /= m_factor;
-//		}
-//
-//		if (divisible) {
-//			count++;
-//		}
-//	}
-//
-//	return count;
-//} 
-class OffsetRowValues
+bool isDivP(uint32_t n, uint32_t k, uint32_t factor)
 {
-public:
-	OffsetRowValues(int factor, int max_pyth_rownum) : m_factor(factor)
-	{
-		m_group_count = log(max_pyth_rownum) / log(factor) + 1;
-		m_group_sizes = std::vector<int>(m_group_count);
-		m_group_digits = std::vector<int>(m_group_count, 0);
-		m_group_counts = std::vector<int>(m_group_count, 0);
-		int f = 1;
-		for (int i = 0; i < m_group_count; i++)
-		{
-			m_group_sizes[i] = f;
-			f *= factor;
-		}
-		m_high_index = 0;
-		m_row_num = 0;
-	}
-
-	OffsetRowValues(int factor, int max_pyth_rownum, int row_num) : m_factor(factor)
-	{
-		m_row_num = row_num;
-		m_group_count = log(max_pyth_rownum) / log(factor) + 1;
-		m_group_sizes = std::vector<int>(m_group_count);
-		m_group_digits = std::vector<int>(m_group_count, 0);
-		m_group_counts = std::vector<int>(m_group_count, 0);
-		int f = 1;
-		for (int i = 0; i < m_group_count; i++)
-		{
-			m_group_sizes[i] = f;
-			f *= factor;
-			m_group_counts[i] = row_num / f;
-		}
-		int rest = row_num;
-		int ix = 0;
-		while (rest > 0)
-		{
-			int digit = rest % factor;
-			m_group_digits[ix] = digit;
-			m_high_index = ix;
-			ix += 1;
-			rest /= factor;
-		}
-	}
-
-	void setRow(int row_num)
-	{
-		//if (row_num >= 7)
-		//	std::cout << "checkpoint" << std::endl;
-
-		m_row_num = row_num;
-
-		int f = 1;
-		for (int i = 0; i < m_group_count; i++)
-		{
-			f *= m_factor;
-			m_group_counts[i] = row_num / f;
-		}
-		int rest = row_num;
-		int ix = 0;
-		while (rest > 0)
-		{
-			int digit = rest % m_factor;
-			m_group_digits[ix] = digit;
-			m_high_index = ix;
-			ix += 1;
-			rest /= m_factor;
-		}
-	}
-
-	int64_t oneCount()
-	{
-
-		if (m_row_num == 399)
-			std::cout << "checkpoint" << std::endl;
-
-		//if (m_row_num < m_factor)
-		//	return 0;
-
-		int upper_count = 0;
-		int64_t count = 0;
-		for (int i = m_high_index; i >= 1; i--)
-		{
-			int64_t group_count = (upper_count + 1) * m_group_digits[i];
-			int group_size = m_group_sizes[i];
-			count += group_count * (group_size - 1 - (m_row_num % group_size));
-			upper_count = group_count == 0 ?
-				upper_count
-				:
-				group_count;
-//			upper_count = group_count;
-		}
-		return count;
-	}
-
-
-	void inc()
-	{
-		if (m_row_num == 100'000'000)
-			std::cout << "checkpoint\n";
-		m_row_num += 1;
-		int group_num = 0;
-		int val = m_group_digits[group_num];
-		m_group_counts[group_num] += 1;
-		bool carry = val + 1 >= m_factor;
-		m_group_digits[group_num] = carry ? 0 : val + 1;
-
-		while (carry)
-		{
-			group_num += 1;
-			m_high_index = group_num > m_high_index ? group_num : m_high_index;
-			m_group_counts[group_num] += 1;
-			val = m_group_digits[group_num];
-			carry = val + 1 >= m_factor;
-			m_group_digits[group_num] = carry ? 0 : val + 1;
-		}
-	}
-
-	int m_row_num = 0;
-	int m_high_index = 0;
-	int m_factor;
-	int m_group_count;
-	std::vector<int> m_group_digits;
-	std::vector<int> m_group_counts;
-	std::vector<int> m_group_sizes;
-
-};
-
-OffsetRowValues g_v(7, MAX_ROW_NUM);
-
-
-int nonPerRow(int row_num, int factor)
-{
-	//for (int i = 0; i < 1'000'000'000; i++)
-	//	g_v.inc();
-
-	g_v.setRow(row_num);
-	int one_count = g_v.oneCount();
-	return row_num + 1 - one_count;
-
-/*
-	int n = row_num - 1;
-	int row_num_mod7 = row_num % 7;
-	int count_7_groups = row_num / 7;
-
-
-	int row_num_mod49 = row_num % 49;
-	int count_49_groups = row_num / 49;
-	if (row_num == 49)
-		std::cout << "checkpoint\n";
-	int count_49 = count_49_groups * (48 - row_num_mod49);
-	int count_7_in_49 = 1 + ((48 - row_num_mod49) / 7);
-	count_7_groups -= count_7_in_49 * count_49_groups;
-	int count_7 = count_7_groups * (6 - row_num_mod7);
-	int count = count_49 + count_7;
-	return row_num + 1 - count;
-
-*/
-
-//int count = 0;
-	//int f = 7 * 7 * 7 * 7 * 7 * 7 * 7 * 7 * 7 * 7 * 7;
-	//int blocked_count = 0;
-	//while (f > 1)
-	//{
-	//	int next_f = f / 7;
-	//	if (row_num >= f)
-	//	{
-	//		//if (row_num == 350)
-	//		if (row_num == 56)
-	//			//if (row_num == 49)
-	//			std::cout << "checkpoint\n";
-	//		int gc = row_num / f - blocked_count;
-	//		int offset = row_num % f;
-	//		int c = gc * (f - 1 - offset);
-	//		count += c;
-	//		blocked_count = blocked_count * factor + gc * (factor - offset / next_f);
-	//		// std::cout << "checkpoint\n";
-	//		//free_count -= gc * (f - offset / factor);
-	//		//next_group_count = 
-	//		// sevenGroupCount -= (factor - offset49 / 7) * gc49;
-	//	}
-	//	f = next_f;
-	//}
-	//return row_num + 1 - count;
+	return factorInFactorial(n, factor) > factorInFactorial(k, factor) + factorInFactorial(n - k, factor);
 }
 
-int nonPerRow_prot(int row_num, int factor)
+uint32_t testNRowCount(uint32_t n, uint32_t factor, bool inverse = true)
 {
-	//if (row_num < factor * factor)
-	//{
-	//	int DivCountPerGroup = factor - (row_num % factor + 1);
-	//	return row_num + 1 - (DivCountPerGroup * (row_num / factor));
-	//}
-	//else
-	//{
-	//	return 2 * (row_num % factor + 1);
-	//}
-	//if (row_num == 56)
-	//	std::cout << "checkpoint\n";
-
-	int count = 0;
-	int sevenGroupCount = row_num / factor;
-	if (row_num >= factor * factor)
+	uint32_t count = 0;
+	for (uint32_t k = 0; k <= n; ++k)
 	{
-		int f = factor * factor;
-		int gc49 = row_num / f;
-		int offset49 = row_num % f;
-		int c49 = gc49 * (f - 1 - offset49);
-		count += c49;
-		sevenGroupCount -= (factor - offset49 / 7) * gc49;
+		if (isDivP(n, k, factor))
+		{
+			count++;
+		}
 	}
-	int sevenOffset = row_num % factor;
-	int divsible_count = sevenGroupCount * (factor - 1 - sevenOffset);
-	count += divsible_count;
-	return row_num + 1 - count;
+	return inverse ?
+		n + 1 - count :
+		count;
 }
 
-int64_t bruteForceTest(int64_t row_count, int factor)
+const uint32_t LEVELS = 11;
+uint64_t nRowsCount(uint32_t rows, uint32_t factor, bool invert = true)
 {
-	int64_t count = 0;
-	int64_t entry_count = 0;
-	for (int64_t i = 0; i <= row_count - 1; i++)
+	uint32_t a_factorPow[LEVELS];
+	uint32_t a_digits[LEVELS];
+	uint32_t a_count[LEVELS];
+	uint32_t ix_high = 0;
+
+	uint32_t scalef = 1;
+	for (uint32_t i = 0; i < LEVELS; i++)
 	{
-		int64_t countForRow = 0;
-		for (int64_t k = 0; k <= i; k++)
+		a_digits[i] = 0;
+		a_count[i] = 0;
+		a_factorPow[i] = scalef;
+		scalef *= FACTOR;
+	}
+
+
+	int64_t sum = 0;
+
+	for (uint32_t n = 0; n < rows; n++)
+	{
+
+		//if (n < factor)
+		//{
+		//	sum += invert ?
+		//		n + 1 :
+		//		0;
+		//}
+
+		for (uint32_t i = 0; i < LEVELS; i++)
 		{
-			entry_count += 1;
-			bool noDiv = false;
-			if (
-				factorCountOfFactorial(i, factor)
-				- factorCountOfFactorial(k, factor)
-				- factorCountOfFactorial(i - k, factor) <= 0
-				)
+			a_count[i] = 0;
+		}
+
+		//uint32_t ix_high = initVectorDigits(v_digits, n, factor);
+		//if (n == 49)
+		//{
+		//	// checkpoint;
+		//	std::cout << "n==49";
+		//}
+
+		for (uint32_t ix = ix_high; ix > 0; ix--)
+		{
+			uint32_t f = a_digits[ix] + a_count[ix];
+			int32_t pow = a_factorPow[ix];
+			int32_t fCount = pow - (n % pow) - 1;
+			a_count[0] += f * fCount;
+			for (uint32_t il = ix - 1; il > 0; il--)
 			{
-				countForRow += 1;
-				noDiv = true;
-				count += 1;
-			}
-			if (VERBOSE1)
-			{
-				if
-					//(i == 323)
-					(i == 100)
-				{
-					std::cout << "(" << i << ", " << k << ") " << " divisible: " << !noDiv;
-					std::cout << "\n";
-				}
+				a_count[il] += f * a_digits[il];
 			}
 		}
-		int64_t non_cnt_row = nonPerRow(i, factor);
-		if (VERBOSE3)
+		int64_t count = a_count[0];
+
+
+		//int64_t test_count = testNRowCount(n, 7, false);
+		//int64_t prob_count = nRowCount(n, 7, false);
+		//if (count != test_count)
+		//{
+		//	std::cout << "mismatch for n = " << n << " : expected: " << test_count << " , but value: " << (int)count << std::endl;
+		//}
+		//if (count != prob_count)
+		//{
+		//	std::cout << "mismatch2 for n = " << n << " : expected: " << test_count << " , but value: " << (int)count << std::endl;
+		//}
+
+		sum += invert ?
+			n + 1 - count :
+			count;
+
+		// update a_digit array with next number n
+		bool carry = false;
+		uint32_t inc_ix=0;
+		uint32_t d = a_digits[inc_ix] +1;
+		a_digits[inc_ix] = d > 6 ? 0 : d;
+		while (d == factor)
 		{
-			if (countForRow != non_cnt_row)
-			{
-				std::cerr << "Mismatch in row " << i << ": countForRow = " << countForRow << ", nonPerRow = " << non_cnt_row << std::endl;
-			}
+			inc_ix += 1;
+			d = a_digits[inc_ix] + 1;
+			a_digits[inc_ix] = d > 6 ? 0 : d;
 		}
-		if (VERBOSE2)
-		{
-			if
-				//(i == 323)
-				(i == 50)
-				std::cout << "nonCount: " << nonPerRow(i, factor) << "\n";
-		}
+		if (inc_ix > ix_high)
+			ix_high = inc_ix;
 	}
-	std::cout << "entry count: " << entry_count << std::endl;
-	return count;
+
+	return sum;
 }
 
-int64_t rowsTest(int64_t row_number, int factor)
+int32_t initVectorDigits(std::vector<uint32_t>& digits, int32_t n, int32_t factor)
 {
-	int64_t count = 0;
-	for (int i = 0; i <= row_number; i++)
-		count += nonPerRow(i, factor);
-	return count;
+	int rest = n;
+	int ix = 0;
+	while (rest > 0)
+	{
+		int32_t d = rest % factor;
+		digits[ix] = d;
+		rest /= factor;
+		ix += 1;
+	}
+	return ix - 1;
 }
 
-
-void print_sampleRows(int factor, int start_row_num, int row_count, std::string fileName, bool printRowHeader)
+uint32_t nRowCount(uint32_t n, uint32_t factor, bool invert = true)
 {
-	int max_n = start_row_num + row_count - 1;
-
-	if (NO_FILEWRITE)
-	if (NO_FILEWRITE)
-		return;
-	std::string _fileName;
-	if (NO_FILEWRITE)
-		_fileName = "NIL:";
-	else
-		_fileName = fileName;
-
-	std::ofstream outFile(_fileName);
-	if (printRowHeader)
+	if (n < factor)
 	{
-		outFile << "*" << '\t';
-		for (int i = 0; i <= max_n; i++)
-		{
-			if (i > 0)
-				outFile << "\t";
-			outFile << i;
-		}
-		outFile << "\n";
+		return invert ?
+			n + 1 :
+			0;
 	}
-	int i = start_row_num;
 
-	for (int i = start_row_num; i <= max_n; i++)
+	std::vector<uint32_t> v_digits(g_levels, 0);
+	std::vector<uint32_t> v_count(g_levels, 0);
+	int32_t ix_high = initVectorDigits(v_digits, n, factor);
+
+
+	uint32_t upper_count = 0;
+
+	for (uint32_t ix = ix_high ; ix > 0; ix--)
 	{
-		outFile << i << "\t";
-
-		for (int j = 0; j <= i; j++)
+		uint32_t f = v_digits[ix] + v_count[ix];
+		int32_t pow = g_factorPow[ix];
+		int32_t fCount = pow - (n % pow) - 1;
+		v_count[0] += f * fCount;
+		for (uint32_t il = ix - 1; il > 0; il--)
 		{
-			int c1 = factorCountOfFactorial(i, factor);
-			int c2 = factorCountOfFactorial(j, factor);
-			int c3 = factorCountOfFactorial(i - j, factor);
-			int is_div =
-				c1 - c2 - c3 <= 0
-				?
-				0 : 1;
-			if (j > 0)
-				outFile << "\t";
-			outFile << is_div;
+			v_count[il] += f * v_digits[il];
 		}
-		outFile << std::endl;
-
 	}
-	outFile.close();
+	int32_t count = v_count[0];
+	return invert ?
+		n + 1 - count :
+		count;
 }
 
-
-void print_sampleMap(int max_n, int factor, std::string fileName)
+void test()
 {
-	if (NO_FILEWRITE)
-		return;
+	//std::cout << "factorInFac(10, 2): " << factorInFactorial(10, 2) << std::endl;
+ //   std::cout << "factorInFac(7, 7): " << factorInFactorial(7, 7) << std::endl;
+ //   std::cout << "factorInFac(8, 7): " << factorInFactorial(8, 7) << std::endl;
+ //   std::cout << "factorInFac(48, 7): " << factorInFactorial(48, 7) << std::endl;
+	//std::cout << "factorInFac(49, 7): " << factorInFactorial(49, 7) << std::endl;
+ //   std::cout << "factorInFac(50, 7): " << factorInFactorial(50, 7) << std::endl;
 
-	std::string _fileName;
-	if (NO_FILEWRITE)
-		_fileName = "NIL:";
-	else
-		_fileName = fileName;
+	//{ int f = 7, n = 6;  std::cout << "testNRowCount(" << n << "," << f << ") = " << testNRowCount(n, f) << " inverse: " << testNRowCount(n, f, false) << std::endl; }
+	//{ int f = 7, n = 7;  std::cout << "testNRowCount(" << n << "," << f << ") = " << testNRowCount(n, f) << " inverse: " << testNRowCount(n, f, false) << std::endl; }
+	//{ int f = 7, n = 8;  std::cout << "testNRowCount(" << n << "," << f << ") = " << testNRowCount(n, f) << " inverse: " << testNRowCount(n, f, false) << std::endl; }
 
-	std::ofstream outFile(_fileName);
+	uint64_t nCount = 0;
 
-	outFile << "*" << '\t';
+	/*
+	
+	bool inverse = false;
 
-	for (int i = 0; i <= max_n; i++)
+	for (uint32_t n = 0; n < 10000; ++n)
 	{
-		if (i > 0)
-			outFile << "\t";
-		outFile << i;
-	}
-	outFile << "\n";
-	for (int i = 0; i <= max_n; i++)
-	{
-		outFile << i << '\t';
-		for (int j = 0; j <= i; j++)
+		int64_t probNCount = nRowCount(n,7, inverse);
+		int64_t testCount = testNRowCount(n, 7, inverse);
+		nCount += testNRowCount(n, 7, inverse);
+		if (probNCount != testCount)
 		{
-			if (i == 8 && j == 7)
-				std::cout << "checkpoint";
-
-			int c1 = factorCountOfFactorial(i, factor);
-			int c2 = factorCountOfFactorial(j, factor);
-			int c3 = factorCountOfFactorial(i - j, factor);
-
-			int is_div =
-				c1 - c2 - c3 <= 0
-				?
-				0 : 1;
-			if (j > 0)
-				outFile << "\t";
-			outFile << is_div;
+			std::cout << "mismatch for n = " << n << " : expected: " << testCount << " , but value: " << (int)probNCount << std::endl;
 		}
-		outFile << std::endl;
 	}
-	outFile.close();
-}
 
+	*/
+
+	//const int32_t row_count = 100;
+	//const int32_t row_count = 100'000;
+	//const int32_t row_count = 10'000'000;
+	//const int32_t row_count = 100'000'000;
+	const int32_t row_count = 1'000'000'000;
+
+	//for (uint32_t n = 0; n < row_count; ++n)
+	//{
+	//	int64_t probNCount = nRowCount(n, 7);
+	//	nCount += probNCount;
+	//}
+	//std::cout << "nCount: " << nCount << std::endl;
+	
+	int64_t countnRows = nRowsCount(row_count, 7);
+	std::cout << "nRowsCount: " << countnRows << std::endl;
+
+}
 
 int64_t solve()
 {
-	//for (int i = 0; i < 1000'000'000; i++)
-	//	g_v.inc();
-	//return 0;
-
-	//std::cout << factorCountOfFactorial(20, 3) << std::endl;
-	//std::cout << checkFactorCount(fac(20), 3) << std::endl;
-	//std::cout << bruteForceTest(1000, 7) << std::endl;
-	//std::cout << rowsTest(1000, 7) << std::endl;
-	//print_sampleMap(200, 7, "output.txt");
-
-	print_sampleRows(7, 398, 10, "output_samplerows.txt", true);
-
-	std::cout << bruteForceTest(1'000, 7) << std::endl;
-	return 0;
+    return nRowsCount(1'000'000'000, 7);
+	// 2129970655314432
 }
 
 int main()
 {
 
-	auto t1 = std::chrono::high_resolution_clock::now();
-	int64_t solution = solve();
-	auto t2 = std::chrono::high_resolution_clock::now();
-	auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-	std::cout << "solution: " << solution << std::endl << "duration: " << microSec << " micro seconds (" << ms << " ms)" << std::endl;
-	if (microSec > 300'000'000)
-	{
-		std::cout << "(" << ((float)microSec) / 60'000'000 << " minutes )" << std::endl;
-	}
+    auto t1 = std::chrono::high_resolution_clock::now();
+    volatile int64_t solution = solve();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    std::cout << "solution: " << solution << std::endl << "duration: " << microSec << " micro seconds (" << ms << " ms)" << std::endl;
+    if (microSec > 300'000'000)
+    {
+        std::cout << "(" << ((float)microSec) / 60'000'000 << " minutes )" << std::endl;
+    }
 }
