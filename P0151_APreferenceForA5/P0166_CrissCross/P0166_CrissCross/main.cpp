@@ -5,10 +5,6 @@
 #include <chrono>
 #include <set>
 
-
-//#define TARGETSUM 15
-//#define MINTOTARGET (TARGETSUM-9)
-
 #undef DEBUG_REF
 #undef DEBUG_MISSING_SYMMETRIES
 
