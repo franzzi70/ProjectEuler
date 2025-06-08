@@ -444,98 +444,20 @@ int64_t solve()
 {
     int64_t solution_count = 0;
     
-    for (int i = 0; i <= 36 ; i++)
+    for (int i = 0; i < 18 ; i++)
     {
 		int64_t solution_count_n = solve_n(i);
-		std::cout << "Solutions for target sum " << i << ": " << solution_count_n << std::endl;
-        solution_count += solution_count_n;
+		std::cout << "Solutions for target sum " << i << " and " << 36-i << ": " << solution_count_n << std::endl;
+        solution_count += solution_count_n * 2;
     }
+	int64_t solution_count_18 = solve_n(18);
+	std::cout << "Solutions for target sum 18: " << solution_count_18 << std::endl;
+	solution_count += solution_count_18; // 18 is not doubled, as it is the center püossible sums
+
+    // 7130034
     return solution_count;
 }
 
-int64_t solve_complicated()
-{
-    int64_t solution_count = 0;
-    square sq;
-	sq.numbers[0] = 0;
-	sq.numbers[1] = 0;
-    int sum1 = 0;
-    int count1 = 1;
-
-	const int TARGETSUM = 12; // Target sum for the square
-	const int MINTOTARGET = TARGETSUM - 9; // Minimum sum for a valid target
-
-    while (count1 < 1000)
-    {
-
-        if ((sum1 > 2) && (sum1 < 13))
-        {
-            int sum2 = 0;
-            int count2 = 1;
-
-            while (count2 < 1000)
-            {
-                if ((sum2 > 2) && (sum2 < 13))
-                {
-                    square sq_test = sq;
-                    sq_test.digits[3] = TARGETSUM - sum1;
-                    sq_test.digits[7] = TARGETSUM - sum2;
-                    //sq_print(sq_test);
-                    bool overflow = false;
-                    for (int i = 0; i < 4; i++)
-                    {
-                        if (sq_test.digits[i] + sq_test.digits[4 + i] > TARGETSUM)
-                        {
-                            overflow = true;
-                            break;
-                        }
-                    }
-                    if (sq_test.digits[0] + sq_test.digits[5] > TARGETSUM)
-                        overflow = true;
-                    if (sq_test.digits[3] + sq_test.digits[6] > TARGETSUM)
-                        overflow = true;
-                    if (!overflow)
-                        solution_count += solve_half(sq_test, TARGETSUM);
-                }
-
-
-                int col2 = 4;
-                int digit = sq.digits[col2];
-                while (digit == 9)
-                {
-                    if (col2 == 2)
-                        break;
-                    sq.digits[col2] = 0;
-                    sum2 -= 9;
-                    col2 += 1;
-                    digit = sq.digits[col2];
-                }
-                sq.digits[col2] = digit + 1;
-                sum2 += 1;
-                count2 += 1;
-            }
-        }
-
-
-        int col1 = 0;
-        int digit = sq.digits[col1];
-        while (digit == 9)
-        {
-            if (col1 == 2)
-                break;
-            sq.digits[col1] = 0;
-            sum1 -= 9;
-            col1 += 1;
-            digit = sq.digits[col1];
-        }
-        sq.digits[col1] = digit + 1;
-        sum1 += 1;
-        count1 += 1;
-    }
-
-    // test();
-    return solution_count;
-}
 
 int main()
 {
