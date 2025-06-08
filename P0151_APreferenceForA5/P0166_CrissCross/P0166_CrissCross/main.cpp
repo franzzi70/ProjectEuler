@@ -154,36 +154,39 @@ int64_t register_solutions(square& sq, uint32_t TARGETSUM)
 {
 
 #ifdef DEBUG_REF
-    static bool initialized = false;
-    static square ref_sq[8];
-    if (!initialized)
+    if (TARGETSUM == 12)
     {
-		uint8_t ref[16] = { 6, 3, 3, 0, 5, 0, 4, 3, 0, 7, 1, 4, 1, 2, 4, 5 };
-		for (int i = 0; i < 16; i++)
-		{
-			ref_sq[0].digits[i] = ref[i];
-		}
-		sq_transpose(ref_sq[0], ref_sq[1]);
-		sq_mirror_x(ref_sq[0], ref_sq[2]);
-		sq_mirror_x(ref_sq[1], ref_sq[3]);
-		sq_mirror_y(ref_sq[0], ref_sq[4]);
-		sq_mirror_y(ref_sq[1], ref_sq[5]);
-		sq_mirror_y(ref_sq[2], ref_sq[6]);
-		sq_mirror_y(ref_sq[3], ref_sq[7]);
+        static bool initialized = false;
+        static square ref_sq[8];
+        if (!initialized)
+        {
+            uint8_t ref[16] = { 6, 3, 3, 0, 5, 0, 4, 3, 0, 7, 1, 4, 1, 2, 4, 5 };
+            for (int i = 0; i < 16; i++)
+            {
+                ref_sq[0].digits[i] = ref[i];
+            }
+            sq_transpose(ref_sq[0], ref_sq[1]);
+            sq_mirror_x(ref_sq[0], ref_sq[2]);
+            sq_mirror_x(ref_sq[1], ref_sq[3]);
+            sq_mirror_y(ref_sq[0], ref_sq[4]);
+            sq_mirror_y(ref_sq[1], ref_sq[5]);
+            sq_mirror_y(ref_sq[2], ref_sq[6]);
+            sq_mirror_y(ref_sq[3], ref_sq[7]);
 
-        initialized = true;
+            initialized = true;
+        }
+
+        // check if the square is equal to any of the reference squares
+        for (int i = 0; i < 8; i++)
+        {
+            if (sq_equal(sq, ref_sq[i]))
+            {
+                // print the square if it matches with reference index
+                std::cout << "Found a solution matching reference square " << i << ": " << std::endl;
+                sq_print(sq);
+            }
+        }
     }
-
-	// check if the square is equal to any of the reference squares
-	for (int i = 0; i < 8; i++)
-	{
-		if (sq_equal(sq, ref_sq[i]))
-		{
-			// print the square if it matches with reference index
-			std::cout << "Found a solution matching reference square " << i << ": " << std::endl;
-			sq_print(sq);
-		}
-	}
 #endif
 
     // check if any digit is out of range (0-9)
