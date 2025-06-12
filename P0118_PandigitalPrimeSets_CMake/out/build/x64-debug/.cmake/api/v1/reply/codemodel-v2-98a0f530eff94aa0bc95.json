@@ -1,0 +1,76 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.8"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "P0118_PandigitalPrimeSets",
+					"jsonFile" : "directory-P0118_PandigitalPrimeSets-Debug-4ab108fe81a6b8f4c033.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.8"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "P0118_PandigitalPrimeSets",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "P0118_PandigitalPrimeSets",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 1,
+					"id" : "P0118_PandigitalPrimeSets::@49f6b9e44836af83d62b",
+					"jsonFile" : "target-P0118_PandigitalPrimeSets-Debug-9fe0b505d6bfc7e96c4e.json",
+					"name" : "P0118_PandigitalPrimeSets",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/FZROOT/dev/gitRepositories/ProjectEuler/P0118_PandigitalPrimeSets/out/build/x64-debug",
+		"source" : "D:/FZROOT/dev/gitRepositories/ProjectEuler/P0118_PandigitalPrimeSets"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

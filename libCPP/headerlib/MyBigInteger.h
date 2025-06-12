@@ -871,6 +871,7 @@ MyBigInteger operator *(__int64 factor, const MyBigInteger& bigInt)
 	return bigInt * factor;
 }
 
+
 //MyBigInteger std::abs(const MyBigInteger& value) const
 //{
 //	//return value < 0 ? -value : value;

@@ -121,6 +121,15 @@ uint64_t nRowsCount(uint32_t rows, uint32_t factor, bool invert = true)
 	return sum;
 }
 
+
+
+
+
+/* chat GPT version: */
+
+/* end of chat GPT version: */
+
+
 uint64_t nRowsCount2(uint32_t rows, uint32_t factor, bool invert = true)
 {
 	uint32_t a_factorPow[LEVELS];
@@ -280,8 +289,8 @@ void test()
 
 int64_t solve()
 {
-    //return nRowsCount(1'000'000'000, 7);
-	return nRowsCount2(1'000'000'000, 7);
+    return nRowsCount(1'000'000'000, 7);
+	//return nRowsCount2(1'000'000'000, 7);
 	//return nRowsCount(100'000'000, 7);
 	//return nRowsCount2(100'000'000, 7);
 	// 2129970655314432
@@ -301,3 +310,4 @@ int main()
         std::cout << "(" << ((float)microSec) / 60'000'000 << " minutes )" << std::endl;
     }
 }
+
