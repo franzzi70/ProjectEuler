@@ -1,0 +1,2 @@
+#pragma code_page(65001)
+1 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "D:/FZROOT/dev/gitRepositories/ProjectEuler/P0118_PandigitalPrimeSets/out/build/x64-debug/P0118_PandigitalPrimeSets/CMakeFiles/P0118_PandigitalPrimeSets.dir/embed.manifest"

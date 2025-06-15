@@ -183,7 +183,7 @@ std::string solve()
 	double rate = analyze();
 	std::string rate_string = std::format("{:.6f}", rate);
 
-	std::cout << "rate:" << rate_string << std::endl;
+	std::cout << "rate: " << rate_string << std::endl;
 	return rate_string;
 }
 
