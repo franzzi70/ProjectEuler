@@ -280,8 +280,8 @@ void test()
 
 int64_t solve()
 {
-    //return nRowsCount(1'000'000'000, 7);
-	return nRowsCount2(1'000'000'000, 7);
+    return nRowsCount(1'000'000'000, 7);
+	//return nRowsCount2(1'000'000'000, 7);
 	//return nRowsCount(100'000'000, 7);
 	//return nRowsCount2(100'000'000, 7);
 	// 2129970655314432
