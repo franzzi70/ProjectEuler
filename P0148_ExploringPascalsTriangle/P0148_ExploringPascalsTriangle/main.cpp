@@ -7,8 +7,12 @@ uint32_t nRowCount_vec(uint32_t n, uint32_t factor, bool invert);
 
 const uint32_t MAX_N = 999'999'999;
 const uint32_t FACTOR = 7;
-uint32_t g_levels = 0;
 std::vector<int> g_factorPow;
+
+constexpr uint32_t ilog(uint32_t n, uint32_t base) {
+	return n < base ? 0 : 1 + ilog(n / base, base);
+}
+constexpr uint32_t LEVELS = ilog(MAX_N, FACTOR) + 1;
 
 void init()
 {
@@ -23,7 +27,6 @@ void init()
 		fp = f * FACTOR;
 		ix++;
 	}
-	g_levels = ix + 1;
 }
 
 
@@ -60,7 +63,6 @@ uint32_t testNRowCount(uint32_t n, uint32_t factor, bool inverse = true)
 		count;
 }
 
-const uint32_t LEVELS = 11;
 uint64_t nRowsCount(uint32_t rows, uint32_t factor, bool invert = true)
 {
 	uint32_t a_factorPow[LEVELS];
@@ -204,8 +206,8 @@ uint32_t nRowCount_vec(uint32_t n, uint32_t factor, bool invert = true)
 			0;
 	}
 
-	std::vector<uint32_t> v_digits(g_levels, 0);
-	std::vector<uint32_t> v_count(g_levels, 0);
+	std::vector<uint32_t> v_digits(LEVELS, 0);
+	std::vector<uint32_t> v_count(LEVELS, 0);
 	int32_t ix_high = initVectorDigits(v_digits, n, factor);
 
 
@@ -289,6 +291,7 @@ int64_t solve()
 
 int main()
 {
+	// std::cout << "LEVELS:" << LEVELS << std::endl;
 
     auto t1 = std::chrono::high_resolution_clock::now();
     volatile int64_t solution = solve();
