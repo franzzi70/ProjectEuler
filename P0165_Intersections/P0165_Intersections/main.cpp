@@ -1,11 +1,20 @@
 
+
 #include <iostream>
+#include <format>
 #include <chrono>
 #include <cmath>
 #include <set>
 #include <map>
+#include <cassert>
 
-const uint32_t LINES_COUNT = 5000;
+
+const int32_t LINES_COUNT = 5000;
+
+typedef std::pair<int64_t, int64_t> fraction;
+typedef std::pair<fraction, fraction> qpoint;
+
+
 struct line {
 	int32_t x1, y1, x2, y2;
 };
@@ -21,35 +30,81 @@ public:
 	}
 };
 
-std::map<double,point> g_points;
+std::map<double, point> g_points;
 
-uint32_t blum_blum_shub(uint32_t seed = 290797)
+
+int32_t blum_blum_shub(int32_t seed = 290797)
 {
-	const uint32_t m = 50515093; // modulus
-	uint64_t snplus1 = ((uint64_t)seed * seed) % m;
-	return (uint32_t)snplus1;
+	const int32_t m = 50515093; // modulus
+	int32_t snplus1 = (int32_t)(((int64_t)seed * seed) % m);
+	assert(snplus1 >= 0 && snplus1 < m);
+	return snplus1;
 }
 
-//bool point_on_section(line& section, point& p)
-//{
-//	// Check if point p is on the line segment defined by section
-//	// assume line normalized so that x1 < x2, and vertical lines (x1 == x2) to not exist
-//	if (section.x1 <= p.x && p.x <= section.x2) {
-//		if (section.x1 == section.x2) { // vertical line
-//			return (p.y >= section.y1 && p.y <= section.y2);
-//		}
-//		else {
-//			double slope = (double)(section.y2 - section.y1) / (section.x2 - section.x1);
-//			double expected_y = section.y1 + slope * (p.x - section.x1);
-//			return (p.y == expected_y);
-//		}
-//	}
-//}
+int64_t gcd(int64_t a, int64_t b)
+{
+	// Calculate the greatest common divisor using the Euclidean algorithm
+	while (b != 0) {
+		int64_t temp = b;
+		b = a % b;
+		a = temp;
+	}
+	return a;
+}
+
+fraction reduce_fraction(fraction f)
+{
+	// Reduce the fraction to its simplest form
+	int64_t gcd_value = gcd(std::abs(f.first), std::abs(f.second));
+	if (f.second < 0)
+	{
+		return { -f.first / gcd_value, -f.second / gcd_value };
+	}
+	return {f.first / gcd_value, f.second / gcd_value };
+}
+
+qpoint test_intersection(line& l1, line& l2, bool& is_parallel)
+{
+	// This function returns true if two line segments l1 and l2 intersect, false otherwise
+	// assume all coordinates are postive integers and normalized so that x1 < x2, and vertical lines (x1 == x2) do not exist
+
+	//assert(!(l1.x1 == l1.x2 || l2.x1 == l2.x2)); // vertical lines are not allowed
+
+	// Check if the segments are parallel
+	// Calculate the direction vectors of the lines
+	// and check if they are proportional
+	// Calculate the determinant to check if they are parallel
+	int64_t x1 = l1.x1;
+	int64_t x2 = l1.x2;
+	int64_t x3 = l2.x1;
+	int64_t x4 = l2.x2;
+	int64_t y1 = l1.y1;
+	int64_t y2 = l1.y2;
+	int64_t y3 = l2.y1;
+	int64_t y4 = l2.y2;
+
+	int64_t det_l1 = x1 * y2 - x2 * y1;
+	int64_t det_l2 = x3 * y4 - x4 * y3;
+
+	int64_t det = (x1 - x2) * (y3 - y4) - (x3 - x4) * (y1 - y2);
+
+	if (det == 0) {
+		is_parallel = true;
+		return { {0,0}, {0,0} }; // parallel lines
+	}
+	else
+		is_parallel = false;
+
+	fraction x = reduce_fraction({ det_l1 * (x3 - x4) - det_l2 * (x1 - x2), det });
+	fraction y = reduce_fraction({ det_l1 * (y3 - y4) - det_l2 * (y1 - y2), det });
+
+	return { x, y };
+}
 
 void init_lines()
 {
-	uint32_t t_n = blum_blum_shub();
-	for (uint32_t i = 0; i < LINES_COUNT; ++i)
+	int32_t t_n = blum_blum_shub();
+	for (int32_t i = 0; i < LINES_COUNT; ++i)
 	{
 		int32_t x1 = t_n % 500;
 		t_n = blum_blum_shub(t_n);
@@ -59,221 +114,134 @@ void init_lines()
 		t_n = blum_blum_shub(t_n);
 		int32_t y2 = t_n % 500;
 		t_n = blum_blum_shub(t_n);
-		if (x1 > x2) {
-			std::swap(x1, x2);
-			std::swap(y1, y2);
-			}
+		//if (x1 > x2) {
+		//	std::swap(x1, x2);
+		//	std::swap(y1, y2);
+		//	}
 		lines[i] = { x1, y1, x2, y2 };
 	}
 }
 
-//point* p_intersect_true(line& l1, line& l2 )
-//{
-//	// This function should calculate the intersection point of two lines l1 and l2
-//	// If they intersect, return a pointer to a point containing the intersection coordinates
-//	// If they do not intersect, return nullptr
-//	// For now, we will just return nullptr as a placeholder
-//
-//	// return nullptr for parallel sections
-//	int32_t lx1 = l1.x2 - l1.x1;
-//	int32_t ly1 = l1.y2 - l1.y1;
-//	int32_t lx2 = l2.x2 - l2.x1;
-//	int32_t ly2 = l2.y2 - l2.y1;
-//
-//	int32_t det = lx1 * ly2 - ly1 * lx2;
-//	if (det == 0) {
-//		return nullptr; // parallel lines
-//	}
-//
-//	if (lx1 == 0)
-//	{
-//		if (lx2 == 0) {
-//			return nullptr; // both lines are vertical
-//		}
-//		else {
-//			// l1 is vertical, l2 is not
-//			double y = ((double)(l2.y1 - l1.x1 * ly2 / lx2)) / (ly2 / lx2);
-//			return new point{ (double)l1.x1, y };
-//		}
-//	}
-//	if (lx2 == 0)
-//	{
-//		// l2 is vertical, l1 is not
-//		double y = ((double)(l1.y1 - l2.x1 * ly1 / lx1)) / (ly1 / lx1);
-//		return new point{ (double)l2.x1, y };
-//	}
-//	else
-//	{
-//		// both lines are not vertical
-//		double a1 = (double)ly1 / lx1; // slope of l1
-//		double b1 = (double)l1.y1 - a1 * l1.x1; // y-intercept of l1
-//		double a2 = (double)ly2 / lx2; // slope of l2
-//		double b2 = (double)l2.y1 - a2 * l2.x1; // y-intercept of l2
-//		if (a1 == a2) {
-//			return nullptr; // parallel lines
-//		}
-//		double x = (b2 - b1) / (a1 - a2);
-//		double y = a1 * x + b1;
-//		return new point{ x, y };
-//	}
-//
-//	return nullptr;
-//}
 
-bool intersect_true(line& l1, line& l2)
+bool point_in_line(line& line, qpoint& q_intersect)
 {
-	// This function returns true if two line segments l1 and l2 intersect, false otherwise
-	// assume all coordinates are postive integers and normalized so that x1 < x2, and vertical lines (x1 == x2) do not exist
-	if (l1.x1 == l1.x2 || l2.x1 == l2.x2) {
-		return false; // vertical lines are not allowed
-	}
-	// Check if the segments are parallel
-	// Calculate the direction vectors of the lines
-	// and check if they are proportional
-	// Calculate the determinant to check if they are parallel
-	int32_t lx1 = l1.x2 - l1.x1;
-	int32_t ly1 = l1.y2 - l1.y1;
-	int32_t lx2 = l2.x2 - l2.x1;
-	int32_t ly2 = l2.y2 - l2.y1;
-	int32_t det = lx1 * ly2 - ly1 * lx2;
-	if (det == 0) {
-		return false; // parallel lines
-	}
-	//double s1 = // slope of l1
-	//	(double)(ly1) / (lx1);
-	//double s2 = // slope of l2
-	//	(double)(ly2) / (lx2);
-	double s1 = (double)(l1.y2 - l1.y1) / (l1.x2-l1.x1); // slope of l1
-	double s2 = (double)(l2.y2 - l2.y1) / (l2.x2 - l2.x1); // slope of l2
-	// y1 = l1.y1 + s1 * x1;
-	// y2 = l2.y1 + s2 * x2;
-	// x1 = x2
-	// y2 = y2
-	// solve these 4 equations to find the intersection point
-	// If the slopes are equal, the lines are parallel
-	if (s1 == s2) {
-		return false; // parallel lines
-	}
-	// Calculate the intersection point using the determinant method
-	// The intersection point (x, y) can be calculated as follows:
-	// x = (l2.y1 - l1.y1 + s1 * l1.x1 - s2 * l2.x1) / (s1 - s2)
-	// y = s1 * (x - l1.x1) + l1.y1
-
-	// l1.y1 + s1 * x1 - l2.y1 - s2 * x2 = 0
-	// l1.y1 + s1 * x - l2.y1 - s2 * x = 0
-	// Rearranging gives us:
-	// x * (x1 - s2) + l1.y1 - l2.y1 = 0
-	// x = (l2.y1-l1.y1)/(s1 - s2)
-	// expand s1 and s2:
-	// x = (l2.y1 - l1.y1 + (double)(ly1) / (lx1) * l1.x1 - (double)(ly2) / (lx2) * l2.x1) / ((double)(ly1) / (lx1) - (double)(ly2) / (lx2))
-	// simplify:
-	// x = (l2.y1 - l1.y1 + (double)(ly1 * l1.x1) / (lx1) - (double)(ly2 * l2.x1) / (lx2)) / ((double)(ly1 * lx2 - ly2 * lx1) / (lx1 * lx2))
-	//  simplify further:
-	// x = (l2.y1 - l1.y1 + (double)(ly1 * l1.x1) * lx2 - (double)(ly2 * l2.x1) * lx1) / (ly1 * lx2 - ly2 * lx1)
-	// expand ly1 and ly2:
-	//  x = (l2.y1 - l1.y1 + (double)(l1.y2 - l1.y1) * l1.x1 * lx2 - (double)(l2.y2 - l2.y1) * l2.x1 * lx1)
-	// / (ly1 * lx2 - ly2 * lx1)
-	// expand ly1 and ly2:
-	//  x = (l2.y1 - l1.y1 + (double)(l1.y2 - l1.y1) * l1.x1 * lx2 - (double)(l2.y2 - l2.y1) * l2.x1 * lx1) / (ly1 * lx2 - ly2 * lx1)
-	// 
-	// ächts
-	// 
-	// 
-	// 
-	// ächts
-	// 
-	// Calculate the intersection point
-	double t = (double)(lx2 * (l1.y1 - l2.y1) - ly2 * (l1.x1 - l2.x1)) / det;
-	double u = (double)(lx1 * (l1.y1 - l2.y1) - ly1 * (l1.x1 - l2.x1)) / det;
-
-	// Check if the intersection point is within both segments,
-	// but only inner points and not end points of the semgents are counted as true intersection.
-
-	if ((t > 0 && t < 1) && (u > 0 && u < 1))
+	// test if point is within both segments:
+	int64_t x1_scaled = line.x1 * q_intersect.first.second;
+	int64_t x2_scaled = line.x2 * q_intersect.first.second;
+	int64_t x_scaled = q_intersect.first.first;
+	if (x1_scaled == x2_scaled)
 	{
-		// Calculate the intersection point coordinates
-		double x_intersect = l1.x1 + t * (l1.x2 - l1.x1);
-		double y_intersect = l1.y1 + t * (l1.y2 - l1.y1);
-		point p_intersect = { x_intersect, y_intersect };
-		g_points.insert(std::make_pair(x_intersect, p_intersect));
-		return true;
+		if (x_scaled != x1_scaled)
+			return false;
 	}
-	return false; // The segments do not intersect
+	else
+	{
+		if (x1_scaled > x2_scaled)
+			std::swap(x1_scaled, x2_scaled);
+		if (x_scaled <= x1_scaled || x_scaled >= x2_scaled)
+			return false;
+	}
+
+	int64_t y1_scaled = line.y1 * q_intersect.second.second;
+	int64_t y2_scaled = line.y2 * q_intersect.second.second;
+	int64_t y_scaled = q_intersect.second.first;
+	if (y1_scaled == y2_scaled)
+	{
+		if (y_scaled != y1_scaled)
+			return false;
+	}
+	else
+	{
+		if (y1_scaled > y2_scaled)
+			std::swap(y1_scaled, y2_scaled);
+		if (y_scaled <= y1_scaled || y_scaled >= y2_scaled)
+			return false;
+	}
+	return true;
 }
 
-void test()
+bool test_intersect_true(line& l1, line& l2, qpoint& p)
 {
-	// test detection of parallel sections
-	line l1 = { 1, 1, 4, 3 };
-	line l2 = { 2, 2, 5, 4 };
-	bool b_intersect = intersect_true(l1, l2);
-	if (b_intersect) 
-		{
-		std::cout << "Lines intersect." << std::endl;
-	}
-	else {
-		std::cout << "Lines do not intersect." << std::endl;
-	}
+	// hitbox test first:
+	if (
+		std::max(l1.x1, l1.x2) <= std::min(l2.x1, l2.x2)
+		|| std::max(l2.x1, l2.x2) <= std::min(l1.x1, l1.x2)
+		|| std::max(l1.y1, l1.y2) <= std::min(l2.y1, l2.y2)
+		|| std::max(l2.y1, l2.y2) <= std::min(l1.y1, l1.y2)
+		)
+		return false;
+
+	p = { {0,0}, {0,0} };
+	bool is_parallel = false;
+	qpoint q_intersect = test_intersection(l1, l2, is_parallel);
+	if (is_parallel)
+		return false;
+	if (!point_in_line(l1, q_intersect))
+		return false;
+	if (!point_in_line(l2, q_intersect))
+		return false;
+
+	p = q_intersect;
+	return true;
 }
 
-extern void test_draw();
+
 
 __int64 solve()
 {
-	test_draw();
-	return 0;
-
 	init_lines();
-	test();
-	
-	uint32_t point_count = 0;
-	for (uint32_t i = 0; i < LINES_COUNT; ++i)
-		for (uint32_t j = 0; j < i; ++j)
+	// test();
+
+	std::set<qpoint> qpoints;
+	int32_t repeat_count = 0;
+	int32_t unique_count = 0;
+	int32_t intersect_count = 0;
+	int32_t non_intersect_count = 0;
+
+	qpoint q_intersect = { {0,0}, {0,0} };
+
+	for (int32_t i = 0; i < LINES_COUNT; ++i)
+	{
+		// std::cout << i << " / " << LINES_COUNT << "\r";
+		for (int32_t j = i + 1; j < LINES_COUNT; ++j)
 		{
-			if (intersect_true(lines[i], lines[j]))
+			if (test_intersect_true(lines[i], lines[j], q_intersect))
 			{
-				point_count++;
-				//std::cout << "Lines " << i << " and " << j << " intersect." << std::endl;
+				intersect_count += 1;
+				// register point
+				if (qpoints.count(q_intersect) > 0)
+				{
+					repeat_count += 1;
+					//std::cout << "point already registered: " << q_intersect.first.first << "/" << q_intersect.first.second << ", "
+					//	<< q_intersect.second.first << "/" << q_intersect.second.second << std::endl;
+				}
+				else
+				{
+					unique_count += 1;
+					qpoints.insert(q_intersect);
+					//std::string str = std::format("({},{})",x_intersect_fraction, y_intersect_fraction);
+					//std::cout << "(" << x_intersect_fraction.first << "/" << x_intersect_fraction.second << "," << y_intersect_fraction.first << "/" << y_intersect_fraction.second << ")\n";
+				}
 			}
 			else
 			{
-				//std::cout << "Lines " << i << " and " << j << " do not intersect." << std::endl;
+				non_intersect_count += 1;
 			}
 		}
-
-	point_count = 0;
-	double last_x = -1;
-	double last_y = -1;
-	for (auto& p : g_points)
-	{
-		bool b_close = false;
-		if (p.first - last_x < 0.0001) // avoid duplicates
-		{
-			if (p.second.y - last_y < 0.0001) // avoid duplicates
-			{
-				double distance = std::sqrt(std::pow(p.second.x - last_x, 2) + std::pow(p.second.y - last_y, 2));
-				if (distance < 1E-9) // close enough to last point
-				{
-					//b_close = true;
-					std::cout << "Point: (" << p.second.x << ", " << p.second.y << ") is close to last point; Distance: " << distance << " , skipping." << std::endl;
-				}
-				//b_close = true;
-				//std::cout << "Point: (" << p.second.x << ", " << p.second.y << ") is close to last point " << last_x << ", " << last_y << " , skipping." << std::endl;
-
-			}
-			//std::cout << "Point: (" << p.second.x << ", " << p.second.y << ")" << std::endl;
-		}
-		last_x = p.second.x;
-		last_y = p.second.y;
-		if (!b_close)
-			point_count += 1;
 	}
-    return point_count;
+
+	std::cout << intersect_count + non_intersect_count << " total pairs of lines were checked." << std::endl;
+	std::cout << non_intersect_count << " pairs of lines did not intersect." << std::endl;
+
+	std::cout << intersect_count << " total intersection points were found." << std::endl;
+	std::cout << repeat_count << " points were repeated." << std::endl;
+	std::cout << unique_count << " distinct intersection points were found." << std::endl;
+
+    return unique_count;
 }
 
 int main()
 {
-
     auto t1 = std::chrono::high_resolution_clock::now();
     __int64 solution = solve();
     auto t2 = std::chrono::high_resolution_clock::now();
