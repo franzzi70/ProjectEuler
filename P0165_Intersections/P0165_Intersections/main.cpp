@@ -216,8 +216,13 @@ void test()
 	}
 }
 
+extern void test_draw();
+
 __int64 solve()
 {
+	test_draw();
+	return 0;
+
 	init_lines();
 	test();
 	

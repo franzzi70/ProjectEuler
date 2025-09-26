@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35514.174 d17.12
+VisualStudioVersion = 17.12.35514.174
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "P0165_Intersections", "P0165_Intersections\P0165_Intersections.vcxproj", "{A45A4F04-767E-4976-B039-76BB2EF34315}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "graphics", "..\libCPP\graphics\graphics.vcxproj", "{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +23,19 @@ Global
 		{A45A4F04-767E-4976-B039-76BB2EF34315}.Release|x64.Build.0 = Release|x64
 		{A45A4F04-767E-4976-B039-76BB2EF34315}.Release|x86.ActiveCfg = Release|Win32
 		{A45A4F04-767E-4976-B039-76BB2EF34315}.Release|x86.Build.0 = Release|Win32
+		{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}.Debug|x64.ActiveCfg = Debug|x64
+		{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}.Debug|x64.Build.0 = Debug|x64
+		{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}.Debug|x86.ActiveCfg = Debug|Win32
+		{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}.Debug|x86.Build.0 = Debug|Win32
+		{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}.Release|x64.ActiveCfg = Release|x64
+		{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}.Release|x64.Build.0 = Release|x64
+		{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}.Release|x86.ActiveCfg = Release|Win32
+		{F8D6611C-4320-470C-BF5D-D7D83DF6CBB1}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3AFF1291-F037-4C7A-8563-CC2D723F7A2B}
 	EndGlobalSection
 EndGlobal
