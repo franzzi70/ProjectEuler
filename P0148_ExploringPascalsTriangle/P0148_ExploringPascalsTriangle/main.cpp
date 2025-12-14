@@ -106,15 +106,16 @@ uint64_t nRowsCount(uint32_t rows, uint32_t factor, bool invert = true)
 			count;
 
 		// update a_digit array with next number n
+		uint32_t highNum = factor - 1;
 		bool carry = false;
 		uint32_t inc_ix=0;
 		uint32_t d = a_digits[inc_ix] +1;
-		a_digits[inc_ix] = d > 6 ? 0 : d;
+		a_digits[inc_ix] = d > highNum ? 0 : d;
 		while (d == factor)
 		{
 			inc_ix += 1;
 			d = a_digits[inc_ix] + 1;
-			a_digits[inc_ix] = d > 6 ? 0 : d;
+			a_digits[inc_ix] = d > highNum ? 0 : d;
 		}
 		if (inc_ix > ix_high)
 			ix_high = inc_ix;
