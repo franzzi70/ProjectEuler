@@ -7,13 +7,27 @@
 #include <set>
 #include <map>
 #include <cassert>
+#include <mutex>
 
+#define NOMINMAX
+#include <windows.h>
+
+
+
+#define THREADCOUNT 16
 
 const int32_t LINES_COUNT = 5000;
 
 typedef std::pair<int64_t, int64_t> fraction;
 typedef std::pair<fraction, fraction> qpoint;
 
+struct rec_shared{
+	int32_t tread_count;
+	std::mutex& mtx;
+	int32_t thread_mod;
+	std::set<qpoint>& qpoints;
+	int32_t& unique_intersect_count;
+};
 
 struct line {
 	int32_t x1, y1, x2, y2;
@@ -29,8 +43,6 @@ public:
 		return y < other.y; // if x's are equal, compare y's
 	}
 };
-
-std::map<double, point> g_points;
 
 
 int32_t blum_blum_shub(int32_t seed = 290797)
@@ -186,10 +198,8 @@ bool test_intersect_true(line& l1, line& l2, qpoint& p)
 }
 
 
-
-__int64 solve()
+int64_t solve_single_t()
 {
-	init_lines();
 	// test();
 
 	std::set<qpoint> qpoints;
@@ -237,13 +247,151 @@ __int64 solve()
 	std::cout << repeat_count << " points were repeated." << std::endl;
 	std::cout << unique_count << " distinct intersection points were found." << std::endl;
 
+/*
+12497500 total pairs of lines were checked.
+9628503 pairs of lines did not intersect.
+2868997 total intersection points were found.
+129 points were repeated.
+2868868 distinct intersection points were found.
+solution: 2868868
+duration: 2256846 micro seconds (2256 ms)
+*/
+
     return unique_count;
 }
 
+void thread_body(rec_shared* shared)
+{
+	std::vector <qpoint> candidates;
+
+	// not implemented
+	std::cout << "thread body started" << std::endl;
+
+	shared->mtx.lock();
+	int32_t thread_count = shared->tread_count;
+	int32_t thread_mod = shared->thread_mod;
+	shared->thread_mod += 1;
+	shared->mtx.unlock();
+
+	int32_t i = 0;
+	int32_t j = thread_mod + 1;
+
+	while (i < LINES_COUNT)
+	{
+		//std::cout << "testing lines " << i << " and " << j << std::endl;
+
+		qpoint q_intersect = { {0,0}, {0,0} };
+		if (test_intersect_true(lines[i], lines[j], q_intersect))
+		{
+			//std::cout << "thread " << std::this_thread::get_id() << " found new point: " << q_intersect.first.first << "/" << q_intersect.first.second << ", "
+			//	<< q_intersect.second.first << "/" << q_intersect.second.second << std::endl;
+			// register point
+			candidates.push_back(q_intersect);
+		}
+
+		int32_t offs = thread_count;
+		j += offs;
+		while (j >= LINES_COUNT)
+		{
+			//offs -= (j - LINES_COUNT);
+			j = i + 1 + thread_mod;
+			i += 1;
+			if (i >= LINES_COUNT)
+				break;
+		}
+		if (i >= LINES_COUNT)
+			break;
+	}
+
+	shared->mtx.lock();
+
+	for (qpoint& q_cand : candidates)
+	{
+		if (shared->qpoints.count(q_cand) == 0)
+		{
+			shared->qpoints.insert(q_cand);
+			shared->unique_intersect_count += 1;
+		}
+	}
+	shared->mtx.unlock();
+
+	return;
+}
+
+
+int64_t solve_multi_t(int32_t thread_count)
+{
+	// not implemented
+	int32_t unique_intersect_count = 0;
+	std::set<qpoint> qpoints;
+	std::mutex mtx;
+
+
+	//int32_t used_thread_count = std::min(thread_count, (int32_t)std::thread::hardware_concurrency());
+	int32_t used_thread_count = thread_count;
+	std::cout << "Using " << used_thread_count << " threads." << std::endl;
+	std::vector<std::thread*> threads(used_thread_count);
+
+	rec_shared shared{
+		.tread_count = used_thread_count,
+		.mtx = mtx,
+		.thread_mod = 0,
+		.qpoints = qpoints,
+		.unique_intersect_count = unique_intersect_count
+	};
+
+
+	for (int i = 0; i < used_thread_count; ++i)
+	{
+		std::cout << std::thread::hardware_concurrency() << " hardware threads supported." << std::endl;
+		threads[i] = new std::thread(thread_body, &shared);
+	}
+	
+	for (int i = 0; i < used_thread_count; ++i)
+	{
+		if (threads[i]->joinable())
+			threads[i]->join();
+	}
+
+
+	return shared.unique_intersect_count;
+}
+
+
+int64_t solve()
+{
+	init_lines();
+	if (THREADCOUNT == 1) {
+		return solve_single_t();
+	}
+	else {
+		return solve_multi_t(THREADCOUNT);
+	}
+}
+
+bool SetMultiCoreAffinity(int coreCount) {
+	// Create mask for first N cores: 0xFF for 8 cores, 0x0F for 4 cores, etc.
+	DWORD_PTR mask = (1ULL << coreCount) - 1;
+
+	if (!SetProcessAffinityMask(GetCurrentProcess(), mask)) {
+		std::cerr << "Failed to set process affinity. Error: " << GetLastError() << std::endl;
+		return false;
+	}
+	std::cout << "Process affinity set to " << coreCount << " cores" << std::endl;
+	return true;
+}
+
+// Usage:
+
+
 int main()
 {
+	// SetProcessAffinityMask(GetCurrentProcess(), 0x00000001); // use only first core for testing
+
+	SetMultiCoreAffinity(8); // Use 8 cores for 8 threads
+
     auto t1 = std::chrono::high_resolution_clock::now();
-    __int64 solution = solve();
+    int64_t solution = solve();
     auto t2 = std::chrono::high_resolution_clock::now();
     auto microSec = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
