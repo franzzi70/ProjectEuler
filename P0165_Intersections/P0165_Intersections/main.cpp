@@ -274,6 +274,7 @@ void thread_body(rec_shared* shared)
 	int32_t thread_mod = shared->thread_mod;
 	shared->thread_mod += 1;
 	shared->candidates[thread_mod] = candidates;
+	candidates->reserve(((LINES_COUNT * LINES_COUNT) / 2) / thread_count);
 	shared->mtx.unlock();
 
 	int32_t i = 0;
