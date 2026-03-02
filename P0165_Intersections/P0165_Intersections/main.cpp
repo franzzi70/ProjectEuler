@@ -9,6 +9,7 @@
 #include <cassert>
 #include <mutex>
 #include <algorithm>
+#include <queue>
 
 #define NOMINMAX
 #include <windows.h>
@@ -27,7 +28,6 @@ struct rec_shared{
 	std::mutex& mtx;
 	int32_t thread_mod;
 	std::set<qpoint>& qpoints;
-	int32_t& unique_intersect_count;
 	std::vector <qpoint> *candidates[THREADCOUNT];
 };
 
@@ -306,20 +306,23 @@ void thread_body(rec_shared* shared)
 			break;
 	}
 
+
+	std::sort(candidates->begin(), candidates->end());
+
 	shared->mtx.lock();
 
 	std::cout << "thread " << std::this_thread::get_id() << " (offset " << thread_mod << ") found " << candidates->size() << " candidate points." << std::endl;
 	
-	std::sort(candidates->begin(), candidates->end());
 
-	for (qpoint& q_cand : *candidates)
-	{
-		if (shared->qpoints.count(q_cand) == 0)
-		{
-			shared->qpoints.insert(q_cand);
-			shared->unique_intersect_count += 1;
-		}
-	}
+	//for (qpoint& q_cand : *candidates)
+	//{
+	//	if (shared->qpoints.count(q_cand) == 0)
+	//	{
+	//		shared->qpoints.insert(q_cand);
+	//		shared->unique_intersect_count += 1;
+	//	}
+	//}
+
 	shared->mtx.unlock();
 
 
@@ -330,7 +333,6 @@ void thread_body(rec_shared* shared)
 int64_t solve_multi_t(int32_t thread_count)
 {
 	// not implemented
-	int32_t unique_intersect_count = 0;
 	std::set<qpoint> qpoints;
 	std::mutex mtx;
 
@@ -345,7 +347,6 @@ int64_t solve_multi_t(int32_t thread_count)
 		.mtx = mtx,
 		.thread_mod = 0,
 		.qpoints = qpoints,
-		.unique_intersect_count = unique_intersect_count
 	};
 
 
@@ -361,12 +362,61 @@ int64_t solve_multi_t(int32_t thread_count)
 			threads[i]->join();
 	}
 
+	// get unique points count from candidates:
+// get unique points count from candidates:
+
+// Method 1: K-way merge using priority queue (most efficient for sorted lists)
+	struct QPointIterator {
+		std::vector<qpoint>::iterator current;
+		std::vector<qpoint>::iterator end;
+		int thread_id;
+
+		bool operator>(const QPointIterator& other) const {
+			return *current > *other.current; // Min-heap
+		}
+	};
+
+	std::priority_queue<QPointIterator, std::vector<QPointIterator>, std::greater<QPointIterator>> pq;
+
+	// Initialize priority queue with first element from each list
+	for (int i = 0; i < used_thread_count; ++i) {
+		if (shared.candidates[i] && !shared.candidates[i]->empty()) {
+			pq.push({ shared.candidates[i]->begin(), shared.candidates[i]->end(), i });
+		}
+	}
+
+	int unique_count_from_merge = 0;
+	qpoint last_point = { {0, 0}, {0, 0} };
+	bool first = true;
+
+	while (!pq.empty()) {
+		QPointIterator top = pq.top();
+		pq.pop();
+
+		// Count unique (skip duplicates)
+		if (first || *top.current != last_point) {
+			unique_count_from_merge++;
+			last_point = *top.current;
+			first = false;
+		}
+
+		// Advance iterator and re-insert if more elements remain
+		++top.current;
+		if (top.current != top.end) {
+			pq.push(top);
+		}
+	}
+
+	std::cout << "Unique points from K-way merge: " << unique_count_from_merge << std::endl;
+
+
 	for (int i = 0; i < used_thread_count; ++i)
 	{
 		delete shared.candidates[i];
+		delete threads[i];
 	}
 
-	return shared.unique_intersect_count;
+	return unique_count_from_merge;
 }
 
 
