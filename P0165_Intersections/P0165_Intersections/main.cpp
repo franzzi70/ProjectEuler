@@ -8,6 +8,7 @@
 #include <map>
 #include <cassert>
 #include <mutex>
+#include <algorithm>
 
 #define NOMINMAX
 #include <windows.h>
@@ -27,6 +28,7 @@ struct rec_shared{
 	int32_t thread_mod;
 	std::set<qpoint>& qpoints;
 	int32_t& unique_intersect_count;
+	std::vector <qpoint> *candidates[THREADCOUNT];
 };
 
 struct line {
@@ -262,7 +264,7 @@ duration: 2256846 micro seconds (2256 ms)
 
 void thread_body(rec_shared* shared)
 {
-	std::vector <qpoint> candidates;
+	std::vector <qpoint>* candidates = new std::vector<qpoint>();
 
 	// not implemented
 	std::cout << "thread body started" << std::endl;
@@ -271,6 +273,7 @@ void thread_body(rec_shared* shared)
 	int32_t thread_count = shared->tread_count;
 	int32_t thread_mod = shared->thread_mod;
 	shared->thread_mod += 1;
+	shared->candidates[thread_mod] = candidates;
 	shared->mtx.unlock();
 
 	int32_t i = 0;
@@ -286,7 +289,7 @@ void thread_body(rec_shared* shared)
 			//std::cout << "thread " << std::this_thread::get_id() << " found new point: " << q_intersect.first.first << "/" << q_intersect.first.second << ", "
 			//	<< q_intersect.second.first << "/" << q_intersect.second.second << std::endl;
 			// register point
-			candidates.push_back(q_intersect);
+			candidates->push_back(q_intersect);
 		}
 
 		int32_t offs = thread_count;
@@ -305,7 +308,11 @@ void thread_body(rec_shared* shared)
 
 	shared->mtx.lock();
 
-	for (qpoint& q_cand : candidates)
+	std::cout << "thread " << std::this_thread::get_id() << " (offset " << thread_mod << ") found " << candidates->size() << " candidate points." << std::endl;
+	
+	std::sort(candidates->begin(), candidates->end());
+
+	for (qpoint& q_cand : *candidates)
 	{
 		if (shared->qpoints.count(q_cand) == 0)
 		{
@@ -314,6 +321,7 @@ void thread_body(rec_shared* shared)
 		}
 	}
 	shared->mtx.unlock();
+
 
 	return;
 }
@@ -353,6 +361,10 @@ int64_t solve_multi_t(int32_t thread_count)
 			threads[i]->join();
 	}
 
+	for (int i = 0; i < used_thread_count; ++i)
+	{
+		delete shared.candidates[i];
+	}
 
 	return shared.unique_intersect_count;
 }
