@@ -309,20 +309,9 @@ void thread_body(rec_shared* shared)
 
 	std::sort(candidates->begin(), candidates->end());
 
+
 	shared->mtx.lock();
-
 	std::cout << "thread " << std::this_thread::get_id() << " (offset " << thread_mod << ") found " << candidates->size() << " candidate points." << std::endl;
-	
-
-	//for (qpoint& q_cand : *candidates)
-	//{
-	//	if (shared->qpoints.count(q_cand) == 0)
-	//	{
-	//		shared->qpoints.insert(q_cand);
-	//		shared->unique_intersect_count += 1;
-	//	}
-	//}
-
 	shared->mtx.unlock();
 
 
