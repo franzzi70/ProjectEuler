@@ -422,17 +422,17 @@ int64_t solve()
 	}
 }
 
-bool SetMultiCoreAffinity(int coreCount) {
-	// Create mask for first N cores: 0xFF for 8 cores, 0x0F for 4 cores, etc.
-	DWORD_PTR mask = (1ULL << coreCount) - 1;
-
-	if (!SetProcessAffinityMask(GetCurrentProcess(), mask)) {
-		std::cerr << "Failed to set process affinity. Error: " << GetLastError() << std::endl;
-		return false;
-	}
-	std::cout << "Process affinity set to " << coreCount << " cores" << std::endl;
-	return true;
-}
+//bool SetMultiCoreAffinity(int coreCount) {
+//	// Create mask for first N cores: 0xFF for 8 cores, 0x0F for 4 cores, etc.
+//	DWORD_PTR mask = (1ULL << coreCount) - 1;
+//
+//	if (!SetProcessAffinityMask(GetCurrentProcess(), mask)) {
+//		std::cerr << "Failed to set process affinity. Error: " << GetLastError() << std::endl;
+//		return false;
+//	}
+//	std::cout << "Process affinity set to " << coreCount << " cores" << std::endl;
+//	return true;
+//}
 
 // Usage:
 
@@ -441,7 +441,6 @@ int main()
 {
 	// SetProcessAffinityMask(GetCurrentProcess(), 0x00000001); // use only first core for testing
 
-	SetMultiCoreAffinity(8); // Use 8 cores for 8 threads
 
     auto t1 = std::chrono::high_resolution_clock::now();
     int64_t solution = solve();
