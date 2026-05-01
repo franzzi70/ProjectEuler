@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="P0169_SumsOfPowersOfTwo/P0169_SumsOfPowersOfTwo.vcxproj" Id="94504b6e-0f5a-46a5-a46f-5b156218310e" />
+</Solution>
