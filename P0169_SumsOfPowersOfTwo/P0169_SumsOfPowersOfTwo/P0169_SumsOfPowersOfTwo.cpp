@@ -9,7 +9,7 @@ const bool DEBUG_PRINT = false;
 std::vector<int64_t> rmem(100 * 100, -1);
 
 // (oneCount,zeroCount) : variations -> r(x,y) := z
-int64_t r(int n, int m)
+static int64_t r(int n, int m)
 {
 	if (n >= 100 || m >= 100)
 	{
@@ -91,13 +91,13 @@ public:
 		if (!pushed)
 		{
 			count += r(oneCount, zeroCount) * next_variations;
-			count += (oneCount) * next_variations_push;
+			count += oneCount * next_variations_push;
 		}
 		else
 		{
 			// push: <11111000> -> <22222200>	-> equiv to <100>  ( <22222200> <22222120> <22222112> )
 			count += r(1, zeroCount-1) * next_variations;
-			count += (oneCount +1) * next_variations_push;
+			count += next_variations_push;	// only one pushed variation can push (<22222111> push 2 to next)
 		}
 
 		return count;
@@ -268,11 +268,10 @@ private:
 void test()
 {
 
-	int count = r(1, 4);
-	std::cout << "r(1,4): " << count << std::endl;
 
-	int count3_2 = r(3, 2);
-	std::cout << "r(3,2): " << count3_2 << std::endl;
+	binVec v15 = binVec(15);
+	v15.print();
+	std::cout << v15.solve() << std::endl;
 
 	binVec v25 = binVec();
 	v25.pow10(25);
@@ -287,8 +286,6 @@ void test()
 	binVec v20 = binVec(20);
 	v20.print();
 	std::cout << v20.solve() << std::endl;
-
-	//exit(0);
 
 	binVec v28 = binVec(28);
 	v28.print();
