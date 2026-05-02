@@ -4,28 +4,122 @@
 #include <chrono>
 #include <vector>
 
-int comb(int n, int k) {
-	if (k > n)
+std::vector<int64_t> rmem(100 * 100, -1);
+
+// (oneCount,zeroCount) : variations -> (x,y) : z
+// r(n,0) : 1
+// r(1,n) : n + 1
+// r(n,1) : 1 + (n-1,1)
+// r(n,2) : (n,1) + (n-1,2)
+// r(n,3) : (n,2) + (n-1,3)
+int64_t r(int n, int m)
+{
+	if (n>=100 || m>= 100)
+	{
+		std::cerr << "n or m too big: " << n << "," << m << std::endl;
 		return 0;
-	if (k == 0 || k == n)
-		return 1;
-	int64_t sum = 1;
-	for (int i = 1; i <= k; i++) {
-		sum *= n - (k - i);
-		sum /= i;
 	}
-	return sum;
+
+	if (m == 0)
+		return 1;
+	if (n == 1)
+		return n + 1;
+	int64_t memVal = rmem[n*1000+m];
+	if (memVal != -1)
+		return memVal;
+	else
+	{
+		int64_t val = r(n, m - 1) + r(n - 1, 1);
+		rmem[n * 1000 + m] = val;
+		return val;
+	}
 }
 
+//int64_t comb(int n, int k) {
+//	if (k > n)
+//		return 0;
+//	if (k == 0 || k == n)
+//		return 1;
+//	int64_t sum = 1;
+//	for (int i = 1; i <= k; i++) {
+//		sum *= n - (k - i);
+//		sum /= i;
+//	}
+//	return sum;
+//}
+
+class cluster {
+public:
+	cluster(int oneCount, int zeroCount) : oneCount(oneCount), zeroCount(zeroCount) {}
+	int oneCount;
+	int zeroCount;
+	cluster* next = nullptr;
+
+	void print() const {
+		for (int i=0;i<oneCount;i++) {
+			std::cout << "1";
+		}
+		for (int i=0;i<zeroCount;i++) {
+			std::cout << "0";
+		}
+		if (next != nullptr) {
+			next->print();
+		}
+	}
+
+	int64_t variations(bool pushed) const {
+		// 1st: within cluster: 1 + variations of the rest of the clusters 1 in the current cluster and m less zero in the current cluster (if there are enough zeros)
+
+		// (oneCount,zeroCount) : variations -> (x,y) : z
+		// (n,0) : 1
+		// (1,n) : n + 1		<1000> <0200> <0120> <0112>
+		// (n,1) : 1 + (n-1,1)
+		//	=> n=2: (<110> <102> <022>)
+		//	=> n=3: (<1110>) + (<1102> <1022> <0222>)
+		// (n,2) : (n,1) + (n-1,1lit)
+		//	=> n=2:	(<1100> <1020> <0220>) + (<1012> <0212>)
+		//  => n=3:	(<11100> <11020> <10220> <02220>) + (<11012> <10212> <02212>)
+		// (n,3) : (n,2) + (n-1,1lit)
+		//	=> n=2: ((<11000> <10200> <02200>) + (<10120> <02120>))  + (<10112> <02112>)
+		// ----------------------------
+		// (n,m) : (n,m-1) + (n-1,1)
+		// ============================
+		int64_t count = 0;
+		int64_t next_variations = 1;
+		int64_t next_variations_push = 0;
+		bool canPush = false;
+		if (next != nullptr) {
+			 next_variations = next->variations(false);
+			 if (next->zeroCount > 0)
+			 {
+				 canPush = true;
+				 next_variations_push = next->variations(true);
+			 }
+		}
+		
+		if (!pushed)
+		{
+			count += r(oneCount, zeroCount) * next_variations;
+			count += (oneCount) * next_variations_push;
+		}
+		else
+		{
+			// push: <11111000> -> <22222200>	-> equiv to <100>  ( <22222200> <22222120> <22222112> )
+			count += r(1, zeroCount-1) * next_variations;
+			count += (oneCount +1) * next_variations_push;
+		}
+
+		return count;
+	}
+};
 
 
 class binVec {
 public:
 	
 	binVec() : v(1, 0), highPos(0) {}
-
-	binVec(const binVec& other) : v(other.v), highPos(other.highPos) {}
-
+	binVec(const binVec& other) : v(other.v), highPos(other.highPos) {
+	}
 	binVec(int64_t num) {
 		int64_t n = num;
 		while (n > 0) {
@@ -37,9 +131,18 @@ public:
 
 	binVec(std::vector<int8_t>& v, int highPos) : v(v), highPos(highPos) {}
 
+	~binVec() {
+		cluster* c = clusterChain;
+		while (c != nullptr) {
+			cluster* next = c->next;
+			delete c;
+			c = next;
+		}
+	}
+
 	void pow10(int pow10) {
 
-		int maxdigits = ceil(pow10 * log(10) / log(2));
+		int maxdigits = (int) ceil(pow10 * log(10) / log(2));
 		v = std::vector<int8_t>(maxdigits, 0);
 		v[0] = 1;
 		for (int i = 1; i <= pow10; i++) {
@@ -111,81 +214,84 @@ public:
 		return result;
 	}
 
-	int64_t variations_bak (int n) const {
-		if (n == 0)
-			return 1;
-		int64_t sum = 1;
-		int i = n-1;
-		//if (v[i] == 1) {
-		//	return 1 + variations(i);
-		//}
-		while (i >= 0 && v[i] == 0) {
-			sum += 1;
-			i--;
-		}
-		if (i < 0)
-			return sum;
-		else
-		{
-			sum *= variations(i);
-			sum += variations(i-1);
-			//while (i >= 0 && v[i] == 1) {
-			//	i--;
-			//}
-			//sum += variations(i);
-		}
+	int64_t solve() {
+		createClusterChain();
+		return clusterChain->variations(false);
 	}
 
-	int64_t variations(int n) const {
-		if (n <= 0)
-			return 1;
-		int64_t sum = 0;
-		if (v[n] == 1) {
-			int ix1 = n;
-			while (ix1 >= 0 && v[ix1] != 0) {
-				ix1--;
-			}
-			int oneCount = n - ix1;
-			int ix0 = ix1;
-			while (ix0 >= 0 && v[ix0] == 0) {
-				ix0--;
-			}
-			int zeroCount = ix1 - ix0;
-			int clusterComb = oneCount * zeroCount;// comb(oneCount + zeroCount, oneCount);
-			sum = clusterComb * variations(ix0);
-		}
-		// TODO: add the cases where the last 1 is pushed onto low one of higher cluster:
-
-
-		// NOT IMPLEMENTED YET.
-
-
-	}
-
-	int64_t solve() const {
-		return variations(highPos);
+	void printClustersChain() {
+		createClusterChain();
+		if (clusterChain != nullptr)
+			clusterChain->print();
 	}
 
 	std::vector<int8_t> v;
 	int highPos = 0;
 
+private:
+	cluster* clusterChain = nullptr;
+
+private:
+	inline cluster* getCluster(int& ix) {
+		int oneCount = 0;
+		int zeroCount = 0;
+		while (ix >= 0 && v[ix] == 1) {
+			oneCount++;
+			ix--;
+		}
+		while (ix >= 0 && v[ix] == 0) {
+			zeroCount++;
+			ix--;
+		}
+		return new cluster(oneCount, zeroCount);
+	}
+	
+	void createClusterChain()
+	{
+		if (clusterChain != nullptr) {
+			return;
+		}
+		int ix = highPos;
+		cluster* prevCluster = nullptr;
+		while (ix > 0) {
+			cluster* c = getCluster(ix);
+			if (prevCluster != nullptr) {
+				prevCluster->next = c;
+			}
+			else
+			{
+				clusterChain = c;
+			}
+			prevCluster = c;
+		}
+	}
 
 };
 
-void test10()
+void test()
 {
 
-	binVec v10 = binVec(10);
-	v10.print();
-	std::cout << v10.solve() << std::endl;
+	//binVec v25 = binVec();
+	//v25.pow10(25);
+	//v25.printClustersChain();
+	//std::cout << "\n------------------\n";
+	//v25.print();
 
-	binVec v20 = binVec(20);
-	v20.print();
-	std::cout << v20.solve() << std::endl;
+	//binVec v10 = binVec(10);
+	//v10.print();
+	//std::cout << v10.solve() << std::endl;
 
-	binVec v28 = binVec(28);
-	v28.print();
-	std::cout << v28.solve() << std::endl;
+	//binVec v20 = binVec(20);
+	//v20.print();
+	//std::cout << v20.solve() << std::endl;
+
+	//binVec v28 = binVec(28);
+	//v28.print();
+	//std::cout << v28.solve() << std::endl;
+
+	//binVec v29 = binVec(29);
+	//v29.print();
+	//std::cout << v29.solve() << std::endl;
 
 	//binVec v25 = binVec();
 	//v25.pow10(25);
@@ -199,18 +305,19 @@ void test10()
 int64_t solve()
 {
 
-	test10();
+	test();
 
-	std::cout << comb(5, 2) << std::endl;
-	std::cout << comb(4, 2) << std::endl;
+	//std::cout << comb(5, 2) << std::endl;
+	//std::cout << comb(4, 2) << std::endl;
 
 	binVec v10pow25 = binVec(10);
 	v10pow25.pow10(10);
-	v10pow25.print();
+	//v10pow25.print();
+	//std::cout << "------------------" << std::endl;
+	//v10pow25.printClustersChain();
 	//std::cout << v10pow25.solve() << std::endl;
 
-	//return v10pow25.solve();
-	return 0;
+	return v10pow25.solve();
 }
 
 int main()
