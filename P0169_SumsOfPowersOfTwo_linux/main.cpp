@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <vector>
+#include <cmath>
 
 const bool DEBUG_PRINT = false;
 

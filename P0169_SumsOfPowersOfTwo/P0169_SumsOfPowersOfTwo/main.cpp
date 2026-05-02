@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <vector>
+#include <cmath>
 
 const bool DEBUG_PRINT = false;
 
@@ -54,10 +55,10 @@ public:
 	cluster* next = nullptr;
 
 	void print() const {
-		for (int i=0;i<oneCount;i++) {
+		for (int i = 0; i < oneCount; i++) {
 			std::cout << "1";
 		}
-		for (int i=0;i<zeroCount;i++) {
+		for (int i = 0; i < zeroCount; i++) {
 			std::cout << "0";
 		}
 
@@ -80,14 +81,14 @@ public:
 		int64_t next_variations_push = 0;
 		bool canPush = false;
 		if (next != nullptr) {
-			 next_variations = next->variations(false);
-			 if (next->zeroCount > 0)
-			 {
-				 canPush = true;
-				 next_variations_push = next->variations(true);
-			 }
+			next_variations = next->variations(false);
+			if (next->zeroCount > 0)
+			{
+				canPush = true;
+				next_variations_push = next->variations(true);
+			}
 		}
-		
+
 		if (!pushed)
 		{
 			count += r(oneCount, zeroCount) * next_variations;
@@ -96,7 +97,7 @@ public:
 		else
 		{
 			// push: <11111000> -> <22222200>	-> equiv to <100>  ( <22222200> <22222120> <22222112> )
-			count += r(1, zeroCount-1) * next_variations;
+			count += r(1, zeroCount - 1) * next_variations;
 			count += next_variations_push;	// only one pushed variation can push (<22222111> push 2 to next)
 		}
 
@@ -107,10 +108,9 @@ public:
 
 class binVec {
 public:
-	
+
 	binVec() : v(1, 0), highPos(0) {}
-	binVec(const binVec& other) : v(other.v), highPos(other.highPos) {
-	}
+	binVec(const binVec& other) : v(other.v), highPos(other.highPos) {}
 	binVec(int64_t num) {
 		int64_t n = num;
 		while (n > 0) {
@@ -133,7 +133,7 @@ public:
 
 	void pow10(int pow10) {
 
-		int maxdigits = (int) ceil(pow10 * log(10) / log(2));
+		int maxdigits = (int)ceil(pow10 * log(10) / log(2));
 		v = std::vector<int8_t>(maxdigits, 0);
 		v[0] = 1;
 		for (int i = 1; i <= pow10; i++) {
@@ -193,7 +193,7 @@ public:
 		}
 	}
 
-	binVec leftshift (int shift) const {
+	binVec leftshift(int shift) const {
 		binVec result(*this);
 		for (size_t i = result.highPos + shift; i >= shift; --i) {
 			result.v[i] = result.v[i - shift];
@@ -242,7 +242,7 @@ private:
 		}
 		return new cluster(oneCount, zeroCount);
 	}
-	
+
 	void createClusterChain()
 	{
 		if (clusterChain != nullptr) {
