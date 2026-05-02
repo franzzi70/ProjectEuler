@@ -4,17 +4,14 @@
 #include <chrono>
 #include <vector>
 
+const bool DEBUG_PRINT = false;
+
 std::vector<int64_t> rmem(100 * 100, -1);
 
-// (oneCount,zeroCount) : variations -> (x,y) : z
-// r(n,0) : 1
-// r(1,n) : n + 1
-// r(n,1) : 1 + (n-1,1)
-// r(n,2) : (n,1) + (n-1,2)
-// r(n,3) : (n,2) + (n-1,3)
+// (oneCount,zeroCount) : variations -> r(x,y) := z
 int64_t r(int n, int m)
 {
-	if (n>=100 || m>= 100)
+	if (n >= 100 || m >= 100)
 	{
 		std::cerr << "n or m too big: " << n << "," << m << std::endl;
 		return 0;
@@ -23,17 +20,18 @@ int64_t r(int n, int m)
 	if (m == 0)
 		return 1;
 	if (n == 1)
-		return n + 1;
-	int64_t memVal = rmem[n*1000+m];
+		return m + 1;
+	int64_t memVal = rmem[n * 1000 + m];
 	if (memVal != -1)
 		return memVal;
 	else
 	{
-		int64_t val = r(n, m - 1) + r(n - 1, 1);
+		int64_t val = 1 + m * r(n - 1, 1);
 		rmem[n * 1000 + m] = val;
 		return val;
 	}
 }
+
 
 //int64_t comb(int n, int k) {
 //	if (k > n)
@@ -62,6 +60,13 @@ public:
 		for (int i=0;i<zeroCount;i++) {
 			std::cout << "0";
 		}
+
+		if (DEBUG_PRINT)
+		{
+			std::cout << "\n\tunpushed: variations for cluster: (" << r(oneCount, zeroCount) << " + " << oneCount << ")";
+			std::cout << "\n\tpushed: variations for cluster: (" << r(1, zeroCount - 1) << " + " << oneCount + 1 << ")\n";
+		}
+
 		if (next != nullptr) {
 			next->print();
 		}
@@ -70,20 +75,6 @@ public:
 	int64_t variations(bool pushed) const {
 		// 1st: within cluster: 1 + variations of the rest of the clusters 1 in the current cluster and m less zero in the current cluster (if there are enough zeros)
 
-		// (oneCount,zeroCount) : variations -> (x,y) : z
-		// (n,0) : 1
-		// (1,n) : n + 1		<1000> <0200> <0120> <0112>
-		// (n,1) : 1 + (n-1,1)
-		//	=> n=2: (<110> <102> <022>)
-		//	=> n=3: (<1110>) + (<1102> <1022> <0222>)
-		// (n,2) : (n,1) + (n-1,1lit)
-		//	=> n=2:	(<1100> <1020> <0220>) + (<1012> <0212>)
-		//  => n=3:	(<11100> <11020> <10220> <02220>) + (<11012> <10212> <02212>)
-		// (n,3) : (n,2) + (n-1,1lit)
-		//	=> n=2: ((<11000> <10200> <02200>) + (<10120> <02120>))  + (<10112> <02112>)
-		// ----------------------------
-		// (n,m) : (n,m-1) + (n-1,1)
-		// ============================
 		int64_t count = 0;
 		int64_t next_variations = 1;
 		int64_t next_variations_push = 0;
@@ -216,6 +207,12 @@ public:
 
 	int64_t solve() {
 		createClusterChain();
+
+		if (DEBUG_PRINT)
+		{
+			clusterChain->print();
+		}
+
 		return clusterChain->variations(false);
 	}
 
@@ -271,27 +268,43 @@ private:
 void test()
 {
 
-	//binVec v25 = binVec();
-	//v25.pow10(25);
-	//v25.printClustersChain();
-	//std::cout << "\n------------------\n";
-	//v25.print();
+	int count = r(1, 4);
+	std::cout << "r(1,4): " << count << std::endl;
 
-	//binVec v10 = binVec(10);
-	//v10.print();
-	//std::cout << v10.solve() << std::endl;
+	int count3_2 = r(3, 2);
+	std::cout << "r(3,2): " << count3_2 << std::endl;
 
-	//binVec v20 = binVec(20);
-	//v20.print();
-	//std::cout << v20.solve() << std::endl;
+	binVec v25 = binVec();
+	v25.pow10(25);
+	v25.printClustersChain();
+	std::cout << "\n------------------\n";
+	v25.print();
 
-	//binVec v28 = binVec(28);
-	//v28.print();
-	//std::cout << v28.solve() << std::endl;
+	binVec v10 = binVec(10);
+	v10.print();
+	std::cout << v10.solve() << std::endl;
 
-	//binVec v29 = binVec(29);
-	//v29.print();
-	//std::cout << v29.solve() << std::endl;
+	binVec v20 = binVec(20);
+	v20.print();
+	std::cout << v20.solve() << std::endl;
+
+	//exit(0);
+
+	binVec v28 = binVec(28);
+	v28.print();
+	std::cout << v28.solve() << std::endl;
+
+	binVec v29 = binVec(29);
+	v29.print();
+	std::cout << v29.solve() << std::endl;
+
+	binVec v112 = binVec(112);
+	v112.print();
+	std::cout << v112.solve() << std::endl;
+
+	binVec v48 = binVec(48);
+	v48.print();
+	std::cout << v48.solve() << std::endl;
 
 	//binVec v25 = binVec();
 	//v25.pow10(25);
@@ -311,8 +324,9 @@ int64_t solve()
 	//std::cout << comb(4, 2) << std::endl;
 
 	binVec v10pow25 = binVec(10);
-	v10pow25.pow10(10);
-	//v10pow25.print();
+	v10pow25.pow10(25);
+	v10pow25.print();
+
 	//std::cout << "------------------" << std::endl;
 	//v10pow25.printClustersChain();
 	//std::cout << v10pow25.solve() << std::endl;
