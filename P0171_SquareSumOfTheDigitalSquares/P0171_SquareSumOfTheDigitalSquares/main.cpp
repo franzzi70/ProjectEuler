@@ -7,6 +7,7 @@
 
 #define DIGITCOUNT 20
 const int64_t MODLIMIT = 1000000000;
+const int MODSIGLIMIT = (int) floor((0.1 + log(MODLIMIT) / log(10)));
 
 std::vector<int8_t> digitArr(DIGITCOUNT + 1, -1);
 int assignCounter = 0;
@@ -18,6 +19,48 @@ int64_t modwrap_count_z = 0;
 int64_t modwrap_count_s = 0;
 int64_t modwrap_count_dc = 0;
 int64_t modwrap_count_dc2 = 0;
+
+
+class ModuloNumbers
+{
+public:
+	ModuloNumbers()
+	{
+		int64_t factor = 1;
+		mod_numbers = std::vector<int64_t>(DIGITCOUNT, 0);
+
+		for (int i = 0; i < DIGITCOUNT; i++)
+		{
+			mod_numbers[i] = factor;
+			factor *= 10;
+			if (factor >= MODLIMIT)
+				factor %= MODLIMIT;
+		}
+	}
+
+	int64_t getDecFactor(int i)
+	{
+		assert(i < DIGITCOUNT);
+		return mod_numbers[i];
+	}
+
+	int64_t getArrayModNumber(int len)
+	{
+		int64_t buf_sum = 0;
+		//int high_index = len - 1;
+		for (int i = 0; i <  MODSIGLIMIT; i++)
+		{
+			buf_sum += getDecFactor(i) * digitArr[i];
+			if (buf_sum >= MODLIMIT)
+				buf_sum %= MODLIMIT;
+		}
+		return buf_sum;
+	}
+
+	std::vector<int64_t> mod_numbers;
+};
+
+ModuloNumbers ms;
 
 
 void printDigitArr(int  len)
@@ -111,7 +154,12 @@ int64_t	zdistr(int len)
 	return result;
 }
 
-int64_t digitcombinations(int startix, int len)
+int64_t sum_digitcombinations(int startix, int len)
+{
+	return 0;
+}
+
+int64_t count_digitcombinations(int startix, int len)
 {
 	// no sequences with 0 will be input, instead calculate the remaining possibilites with
 	// zeroes, but not leading zeroes. Each input is unique, so all different counts of
@@ -176,11 +224,12 @@ int64_t digitcombinations(int startix, int len)
 	return result;
 }
 
+int64_t sum = 0;
 int64_t countVariations(int digitLimit, int pos, int sq_sum)
 {
 	assert(pos < DIGITCOUNT);
 	
-	int64_t sum = 0;
+	int64_t count = 0;
 	for (int i = digitLimit; i <= 9; i++)
 	{
 		digitArr[pos] = i;
@@ -196,12 +245,20 @@ int64_t countVariations(int digitLimit, int pos, int sq_sum)
 		if (is_square(sq_new_sum))
 		{
 			square_count += 1;
-			sum += digitcombinations(0, pos+1);
+			count += count_digitcombinations(0, pos+1);
+			if (count >= MODLIMIT)
+			{
+				count %= MODLIMIT;
+				modwrap_count += 1;
+				modwrap_count_s += 1;
+			}
+
+			sum += ms.getArrayModNumber(pos + 1);
 			if (sum >= MODLIMIT)
 			{
 				sum %= MODLIMIT;
 				modwrap_count += 1;
-				modwrap_count_s += 1;
+				modwrap_count_z += 1;
 			}
 			//std::cout << "SQUARE FOUND: " << sq_new_sum << "(";
 			//printDigitArr(pos+1);
@@ -217,18 +274,18 @@ int64_t countVariations(int digitLimit, int pos, int sq_sum)
 
 		if (pos < (DIGITCOUNT -1))
 		{
-			sum += countVariations(i, pos+1, sq_new_sum);
-			if (sum >= MODLIMIT)
+			count += countVariations(i, pos+1, sq_new_sum);
+			if (count >= MODLIMIT)
 			{
-				sum %= MODLIMIT;
+				count %= MODLIMIT;
 				modwrap_count += 1;
 				modwrap_count_s += 1;
 			}
 		}
 	}
-	if (sum >= MODLIMIT)
+	if (count >= MODLIMIT)
 	{
-		sum %= MODLIMIT;
+		count %= MODLIMIT;
 		modwrap_count += 1;
 		modwrap_count_s += 1;
 	}
@@ -245,12 +302,14 @@ void test_setarr(int8_t arr[], int len)
 void test()
 {
 
-	std::cout << zdistr(2) << std::endl, std::cout << zdistr(3) << std::endl;
+	std::cout << "MODSIGLIMIT: " << MODSIGLIMIT << std::endl;
 
-	int8_t test_arr[]{ 1,2 };
-	test_setarr(test_arr, 2);
-	int64_t test_comb = digitcombinations(0,2);
-	std::cout << "test_comb: " << test_comb << std::endl;
+	//std::cout << zdistr(2) << std::endl, std::cout << zdistr(3) << std::endl;
+
+	//int8_t test_arr[]{ 1,2 };
+	//test_setarr(test_arr, 2);
+	//int64_t test_comb = digitcombinations(0,2);
+	//std::cout << "test_comb: " << test_comb << std::endl;
 
 
 	//int64_t count = countVariations(1, 0, 0);	// start with 1, treat leading 0 separately for every found solution in digitcombinations function.
@@ -335,6 +394,8 @@ int64_t solve()
 	std::cout << "modwrap_count_s: " << modwrap_count_s << std::endl;
 	std::cout << "modwrap_count_dc: " << modwrap_count_dc << std::endl;
 	std::cout << "modwrap_count_dc2: " << modwrap_count_dc2 << std::endl;
+	std::cout << "sum: " << sum << std::endl;
+	std::cout << "count: " << count << std::endl;
 
 	return count;
 }
