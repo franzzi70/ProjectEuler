@@ -4,11 +4,13 @@
 #include <chrono>
 #include <cmath>
 #include <cassert>
+#include <algorithm>
 
 #define DIGITCOUNT 20
-const int64_t MODLIMIT = 1000000000;
+const int64_t MODLIMIT = 1'000'000'000;
+const int MODSIGLIMIT = (int)(floor(log(MODLIMIT) / log(10) + 0.1));
 
-std::vector<int8_t> digitArr(DIGITCOUNT + 1, -1);
+std::vector<int8_t> digit_grouped_arr(DIGITCOUNT + 1, -1);
 int assignCounter = 0;
 int sq_sum = 0;
 int square_count = 0;
@@ -18,12 +20,152 @@ int64_t modwrap_count_z = 0;
 int64_t modwrap_count_s = 0;
 int64_t modwrap_count_dc = 0;
 int64_t modwrap_count_dc2 = 0;
+int64_t dbg_sequence_count = 0;
+int64_t dbg_sum_groups_count = 0;
 
+class DigitGroup {
+public:
+	DigitGroup()
+	{
+		digit = 0;
+		count = 0;
+		remaining = 0;
+	}
+	DigitGroup(int8_t digit, int count)
+	{
+		this->digit = digit;
+		this->count = count;
+		this->remaining = count;
+	}
+	DigitGroup(const DigitGroup& other)
+	{
+		this->digit = other.digit;
+		this->count = other.count;
+		this->remaining = other.remaining;
+	}
+
+	int8_t digit;
+	int count;
+	int remaining;
+};
+
+class ModNumbers {
+public:
+	ModNumbers()
+	{
+		init_static();
+
+	}
+
+	int64_t  arrToNum(std::vector<int8_t>& v)
+	{
+		int64_t sum = 0;
+		for (int i = 0; i <= MODSIGLIMIT; i++)
+		{
+			sum += v[i] * digitPow10[i];
+		}
+		return sum;
+	}
+
+private:
+	void init_static()
+	{
+		if (initialized)
+			return;
+
+		digitPow10 = std::vector<int64_t>(MODSIGLIMIT+1, 0);
+		int64_t f = 1;
+		for (int i = 0; i <= MODSIGLIMIT; i++)
+		{
+			digitPow10[i] = f;
+			f *= 10;
+		}
+
+		initialized = true;
+	}
+
+public:
+	static bool initialized;
+	static std::vector<int64_t> digitPow10;
+};
+bool ModNumbers::initialized = false;
+std::vector<int64_t> ModNumbers::digitPow10;
+
+int64_t eval_groups(
+	int pos,
+	int nzcount,
+	std::vector<int8_t>& digits,
+	std::vector<DigitGroup>& groups,
+	int8_t groupcount
+	)
+{
+	if (pos <= MODSIGLIMIT)
+	{
+		if (nzcount == 0)
+		{
+			// all remaining digits are zero, so we can calculate the number of combinations for this distribution of digits.
+			dbg_sequence_count += 1;
+			groups[groupcount - 1].remaining = 0;
+		}
+		else
+		{
+			for (int8_t i = 0; i < groupcount; i++)
+			{
+				int8_t digit = groups[i].digit;
+				if (groups[i].remaining > 0)
+				{
+					groups[i].remaining -= 1;
+					digits[pos] = digit;
+					int new_nzcount = digit == 0 ? nzcount : nzcount - 1;
+					eval_groups(pos + 1, new_nzcount, digits, groups, groupcount);
+					groups[i].remaining += 1;
+				}
+			}
+		}
+	}
+	else
+	{
+		// filled first MODSIGLIMIT digits, so we can calculate the number of combinations for this distribution of digits.
+
+		dbg_sequence_count += 1;
+	}
+
+	return 0;
+}
+
+int64_t sum_groups(std::vector<DigitGroup>& groups)
+{
+	int nzcount = 0;
+	int64_t sum = 0;
+	std::vector<DigitGroup> tmpGroups = groups;
+	std::vector<int8_t> tmpDigits (DIGITCOUNT, 0);
+	for (DigitGroup g:tmpGroups)
+	{
+		assert(g.digit != 0);
+		nzcount += g.count;
+	}
+	int group_count = (int)tmpGroups.size();
+	if (nzcount < DIGITCOUNT)
+		tmpGroups.push_back(DigitGroup(0, std::min(MODSIGLIMIT-1, DIGITCOUNT - nzcount)));
+	
+	dbg_sum_groups_count += 1;
+	if (dbg_sum_groups_count % 100 == 0)
+	{
+		std::cout << "dbg_sum_groups_count: " << dbg_sum_groups_count << std::endl;
+		if (dbg_sum_groups_count == 1000)
+			exit(0);
+	}
+	sum = eval_groups(0, nzcount, tmpDigits, tmpGroups, (int8_t) tmpGroups.size());
+
+	//std::vector<DigitGroup> groups;
+	return 0;
+
+}
 
 void printDigitArr(int  len)
 {
 	for (int i = 0; i < len; i++)
-		std::cout << (int)(digitArr[i]);
+		std::cout << (int)(digit_grouped_arr[i]);
 }
 
 bool is_square(int num)
@@ -111,7 +253,33 @@ int64_t	zdistr(int len)
 	return result;
 }
 
-int64_t digitcombinations(int startix, int len)
+int64_t sum_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int len)
+{
+	int64_t sum = 0;
+	std::vector<DigitGroup> groups;
+	int8_t first_digit = digit_arr[startix];
+
+	assert(first_digit != 0);
+
+	int ix = 1;
+	while (ix < len && digit_arr[ix + startix] == first_digit)
+		ix++;
+	groups.push_back(DigitGroup(first_digit, ix));
+	// we have at least two different digits, so we need to calculate the combinations.
+	while (ix < len)
+	{
+		int ix_marker = ix;
+		int8_t current_digit = digit_arr[ix + startix];
+		while (ix < len && digit_arr[ix + startix] == current_digit)
+			ix++;
+		int current_count = ix - ix_marker;
+		groups.push_back(DigitGroup(current_digit, current_count));
+	}
+	sum = sum_groups(groups);
+	return sum;
+}
+
+int64_t digitcombinations(std::vector<int8_t>& digit_arr, int startix, int len)
 {
 	// no sequences with 0 will be input, instead calculate the remaining possibilites with
 	// zeroes, but not leading zeroes. Each input is unique, so all different counts of
@@ -128,13 +296,16 @@ int64_t digitcombinations(int startix, int len)
 
 	//assert(digitArr[startix] != 0);
 
-	int8_t first_digit = digitArr[startix];
+	std::vector<DigitGroup> groups;
+
+	int8_t first_digit = digit_arr[startix];
 
 	assert(first_digit != 0);
 
 	int ix = 1;
-	while (ix < len && digitArr[ix+startix] == first_digit)
+	while (ix < len && digit_arr[ix+startix] == first_digit)
 		ix++;
+	groups.push_back(DigitGroup(first_digit, ix));
 	if (ix == len)
 	{
 		result = 1;
@@ -146,9 +317,10 @@ int64_t digitcombinations(int startix, int len)
 		while (ix < len)
 		{
 			int ix_marker = ix;
-			int8_t current_digit = digitArr[ix + startix];
-			while (ix < len && digitArr[ix + startix] == current_digit)
+			int8_t current_digit = digit_arr[ix + startix];
+			while (ix < len && digit_arr[ix + startix] == current_digit)
 				ix++;
+			groups.push_back(DigitGroup(current_digit, ix - ix_marker));
 			int current_count = ix - ix_marker;
 			result *= comb(ix, current_count);
 			if (result >= MODLIMIT)
@@ -176,27 +348,22 @@ int64_t digitcombinations(int startix, int len)
 	return result;
 }
 
-int64_t countVariations(int digitLimit, int pos, int sq_sum)
+int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos, int sq_sum)
 {
 	assert(pos < DIGITCOUNT);
 	
 	int64_t sum = 0;
 	for (int i = digitLimit; i <= 9; i++)
 	{
-		digitArr[pos] = i;
+		digit_arr[pos] = i;
 		assignCounter += 1;
 
 		int sq_new_sum = sq_sum + i * i;
 
-		//if (sq_new_sum == 100)
-		//	std::cout << "hier!" << std::endl;
-		//if (lastPos == 17 && i==7)
-		//	std::cout << "hier!" << std::endl;
-
 		if (is_square(sq_new_sum))
 		{
 			square_count += 1;
-			sum += digitcombinations(0, pos+1);
+			sum += sum_digitcombinations(digit_arr, 0, pos+1);
 			if (sum >= MODLIMIT)
 			{
 				sum %= MODLIMIT;
@@ -217,7 +384,7 @@ int64_t countVariations(int digitLimit, int pos, int sq_sum)
 
 		if (pos < (DIGITCOUNT -1))
 		{
-			sum += countVariations(i, pos+1, sq_new_sum);
+			sum += countVariations(digit_arr, i, pos+1, sq_new_sum);
 			if (sum >= MODLIMIT)
 			{
 				sum %= MODLIMIT;
@@ -239,19 +406,29 @@ int64_t countVariations(int digitLimit, int pos, int sq_sum)
 void test_setarr(int8_t arr[], int len)
 {
 	for (int i = 0; i < len; i++)
-		digitArr[i] = arr[i];
+		digit_grouped_arr[i] = arr[i];
 }
 
 void test()
 {
 
+	//ModNumbers* mn = new ModNumbers();
+	ModNumbers mn;
+
+	std::cout << "MOGSIGLIMIT:" << MODSIGLIMIT << std::endl;
 	std::cout << zdistr(2) << std::endl, std::cout << zdistr(3) << std::endl;
 
 	int8_t test_arr[]{ 1,2 };
 	test_setarr(test_arr, 2);
-	int64_t test_comb = digitcombinations(0,2);
+	int64_t test_comb = digitcombinations(digit_grouped_arr, 0, 2);
 	std::cout << "test_comb: " << test_comb << std::endl;
 
+	std::vector<int8_t> test_vec(20,0);
+	test_vec[0] = 1;
+	test_vec[1] = 2;
+	test_vec[2] = 7;
+	int64_t mod_num = mn.arrToNum(test_vec);
+	std::cout << "mod_num: " << mod_num << std::endl;
 
 	//int64_t count = countVariations(1, 0, 0);	// start with 1, treat leading 0 separately for every found solution in digitcombinations function.
 	//std::cout << "variations(0,"<< DIGITCOUNT << ") = " << count % MODLIMIT << std::endl;
@@ -324,9 +501,9 @@ void test()
 
 int64_t solve()
 {
-	test();
+	//test();
 
-	int64_t count = (countVariations(1, 0, 0)) % MODLIMIT;	// start with 1, treat leading 0 separately for every found solution in digitcombinations function.
+	int64_t count = (countVariations(digit_grouped_arr, 1, 0, 0)) % MODLIMIT;	// start with 1, treat leading 0 separately for every found solution in digitcombinations function.
 	std::cout << "variations(0," << DIGITCOUNT << ") = " << count << std::endl;
 	std::cout << "squares found:" << square_count << std::endl;
 
@@ -335,6 +512,7 @@ int64_t solve()
 	std::cout << "modwrap_count_s: " << modwrap_count_s << std::endl;
 	std::cout << "modwrap_count_dc: " << modwrap_count_dc << std::endl;
 	std::cout << "modwrap_count_dc2: " << modwrap_count_dc2 << std::endl;
+	std::cout << "dbg_sequence_count: " << dbg_sequence_count << std::endl;
 
 	return count;
 }

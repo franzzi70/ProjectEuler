@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="P0171_SquareSumOfTheDigitalSquares/P0171_SquareSumOfTheDigitalSquares.vcxproj" />
+  <Project Path="P0171_SquareSumOfTheDigitalSquares/P0171_SquareSumOfTheDigitalSquares.vcxproj" Id="b6728563-a5d1-43e2-b71c-d32e7c114ebe" />
 </Solution>
