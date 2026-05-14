@@ -7,13 +7,8 @@
 #include <algorithm>
 
 #define DIGITCOUNT 20
-<<<<<<< HEAD
-const int64_t MODLIMIT = 1000000000;
-const int MODSIGLIMIT = (int) floor((0.1 + log(MODLIMIT) / log(10)));
-=======
 const int64_t MODLIMIT = 1'000'000'000;
-const int MODSIGLIMIT = (int)(floor(log(MODLIMIT) / log(10) + 0.1));
->>>>>>> 382881d8d8cb7db09c668793bf1a8877974fe162
+const int MODSIGLIMIT = (int) floor(0.1 + log(MODLIMIT) / log(10));
 
 std::vector<int8_t> digit_grouped_arr(DIGITCOUNT + 1, -1);
 int assignCounter = 0;
@@ -196,7 +191,7 @@ public:
 		//int high_index = len - 1;
 		for (int i = 0; i <  MODSIGLIMIT; i++)
 		{
-			buf_sum += getDecFactor(i) * digitArr[i];
+			buf_sum += getDecFactor(i) * digit_grouped_arr[i];
 			if (buf_sum >= MODLIMIT)
 				buf_sum %= MODLIMIT;
 		}
@@ -300,14 +295,6 @@ int64_t	zdistr(int len)
 	return result;
 }
 
-<<<<<<< HEAD
-int64_t sum_digitcombinations(int startix, int len)
-{
-	return 0;
-}
-
-int64_t count_digitcombinations(int startix, int len)
-=======
 int64_t sum_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int len)
 {
 	int64_t sum = 0;
@@ -334,8 +321,7 @@ int64_t sum_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int l
 	return sum;
 }
 
-int64_t digitcombinations(std::vector<int8_t>& digit_arr, int startix, int len)
->>>>>>> 382881d8d8cb7db09c668793bf1a8877974fe162
+int64_t count_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int len)
 {
 	// no sequences with 0 will be input, instead calculate the remaining possibilites with
 	// zeroes, but not leading zeroes. Each input is unique, so all different counts of
@@ -404,12 +390,8 @@ int64_t digitcombinations(std::vector<int8_t>& digit_arr, int startix, int len)
 	return result;
 }
 
-<<<<<<< HEAD
 int64_t sum = 0;
-int64_t countVariations(int digitLimit, int pos, int sq_sum)
-=======
 int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos, int sq_sum)
->>>>>>> 382881d8d8cb7db09c668793bf1a8877974fe162
 {
 	assert(pos < DIGITCOUNT);
 	
@@ -424,8 +406,7 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 		if (is_square(sq_new_sum))
 		{
 			square_count += 1;
-<<<<<<< HEAD
-			count += count_digitcombinations(0, pos+1);
+			count += count_digitcombinations(digit_arr,0, pos+1);
 			if (count >= MODLIMIT)
 			{
 				count %= MODLIMIT;
@@ -434,9 +415,6 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 			}
 
 			sum += ms.getArrayModNumber(pos + 1);
-=======
-			sum += sum_digitcombinations(digit_arr, 0, pos+1);
->>>>>>> 382881d8d8cb7db09c668793bf1a8877974fe162
 			if (sum >= MODLIMIT)
 			{
 				sum %= MODLIMIT;
@@ -457,13 +435,8 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 
 		if (pos < (DIGITCOUNT -1))
 		{
-<<<<<<< HEAD
-			count += countVariations(i, pos+1, sq_new_sum);
+			count += countVariations(digit_arr, i, pos+1, sq_new_sum);
 			if (count >= MODLIMIT)
-=======
-			sum += countVariations(digit_arr, i, pos+1, sq_new_sum);
-			if (sum >= MODLIMIT)
->>>>>>> 382881d8d8cb7db09c668793bf1a8877974fe162
 			{
 				count %= MODLIMIT;
 				modwrap_count += 1;
@@ -490,7 +463,6 @@ void test_setarr(int8_t arr[], int len)
 void test()
 {
 
-<<<<<<< HEAD
 	std::cout << "MODSIGLIMIT: " << MODSIGLIMIT << std::endl;
 
 	//std::cout << zdistr(2) << std::endl, std::cout << zdistr(3) << std::endl;
@@ -499,7 +471,6 @@ void test()
 	//test_setarr(test_arr, 2);
 	//int64_t test_comb = digitcombinations(0,2);
 	//std::cout << "test_comb: " << test_comb << std::endl;
-=======
 	//ModNumbers* mn = new ModNumbers();
 	ModNumbers mn;
 
@@ -508,9 +479,8 @@ void test()
 
 	int8_t test_arr[]{ 1,2 };
 	test_setarr(test_arr, 2);
-	int64_t test_comb = digitcombinations(digit_grouped_arr, 0, 2);
+	int64_t test_comb = count_digitcombinations(digit_grouped_arr, 0, 2);
 	std::cout << "test_comb: " << test_comb << std::endl;
->>>>>>> 382881d8d8cb7db09c668793bf1a8877974fe162
 
 	std::vector<int8_t> test_vec(20,0);
 	test_vec[0] = 1;
@@ -601,12 +571,9 @@ int64_t solve()
 	std::cout << "modwrap_count_s: " << modwrap_count_s << std::endl;
 	std::cout << "modwrap_count_dc: " << modwrap_count_dc << std::endl;
 	std::cout << "modwrap_count_dc2: " << modwrap_count_dc2 << std::endl;
-<<<<<<< HEAD
 	std::cout << "sum: " << sum << std::endl;
 	std::cout << "count: " << count << std::endl;
-=======
 	std::cout << "dbg_sequence_count: " << dbg_sequence_count << std::endl;
->>>>>>> 382881d8d8cb7db09c668793bf1a8877974fe162
 
 	return count;
 }
