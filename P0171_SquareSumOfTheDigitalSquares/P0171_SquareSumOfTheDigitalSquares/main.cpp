@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include <chrono>
+#include <vector>
 #include <cmath>
 #include <cassert>
+#include <unordered_map>
 #include <algorithm>
 
 #define DIGITCOUNT 20
@@ -22,6 +24,10 @@ int64_t modwrap_count_dc = 0;
 int64_t modwrap_count_dc2 = 0;
 int64_t dbg_sequence_count = 0;
 int64_t dbg_sum_groups_count = 0;
+int64_t dbg_code_high_used = 0;
+int64_t dbg_code_high_stored = 0;
+int64_t dbg_code_low_used = 0;
+int64_t dbg_code_low_stored = 0;
 
 class DigitGroup {
 public:
@@ -91,35 +97,74 @@ public:
 bool ModNumbers::initialized = false;
 std::vector<int64_t> ModNumbers::digitPow10;
 
-int64_t eval_groups(
+int64_t encode_groupscounts(int pos, std::vector<DigitGroup>& groups, int grouplen)
+{
+	int ix = 0;
+	int i = 0;
+	static int8_t buf[10];
+	//std::array<int8_t, 10> buf;
+	while (i < grouplen)
+	{
+		if (groups[i].remaining != 0)
+		{
+			if (groups[i].digit != 0)
+			{
+				buf[ix] = groups[i].remaining;
+				ix += 1;
+			}
+		}
+		i++;
+	}
+	std::sort(buf, buf+ix);
+	int64_t val = 0;
+	int64_t f = 1;
+	for (int i = 0; i < ix; i++)
+	{
+		val += buf[i] * f;
+		f *= 10;
+	}
+	val += 1'000'000'000 * (int64_t) pos;
+	return val;
+}
+
+
+int64_t eval_groups_highdigits(
 	int pos,
 	int nzcount,
-	std::vector<int8_t>& digits,
 	std::vector<DigitGroup>& groups,
 	int8_t groupcount
 	)
 {
-	if (pos <= MODSIGLIMIT)
+	static std::unordered_map<int64_t, int64_t> mem_highgroups;
+
+	int64_t groups_code = encode_groupscounts(pos, groups, groupcount);
+	auto mem_it = mem_highgroups.find(groups_code);
+	if (mem_it != mem_highgroups.end())
 	{
-		if (nzcount == 0)
+		dbg_code_high_used += 1;
+		int64_t val = mem_it->second;
+		return val;
+	}
+
+	int64_t sum = 0;
+	if (pos < DIGITCOUNT-1)
+	{
+		assert(nzcount > 0);
+
+		for (int8_t i = 0; i < groupcount; i++)
 		{
-			// all remaining digits are zero, so we can calculate the number of combinations for this distribution of digits.
-			dbg_sequence_count += 1;
-			groups[groupcount - 1].remaining = 0;
-		}
-		else
-		{
-			for (int8_t i = 0; i < groupcount; i++)
+			if (groups[i].remaining > 0)
 			{
 				int8_t digit = groups[i].digit;
-				if (groups[i].remaining > 0)
+				groups[i].remaining -= 1;
+				int new_nzcount = digit == 0 ? nzcount : nzcount - 1;
+				int64_t val = 1;
+				if (new_nzcount != 0)
 				{
-					groups[i].remaining -= 1;
-					digits[pos] = digit;
-					int new_nzcount = digit == 0 ? nzcount : nzcount - 1;
-					eval_groups(pos + 1, new_nzcount, digits, groups, groupcount);
-					groups[i].remaining += 1;
+					val = eval_groups_highdigits(pos + 1, new_nzcount, groups, groupcount);
 				}
+				sum += val;
+				groups[i].remaining += 1;
 			}
 		}
 	}
@@ -128,14 +173,95 @@ int64_t eval_groups(
 		// filled first MODSIGLIMIT digits, so we can calculate the number of combinations for this distribution of digits.
 
 		dbg_sequence_count += 1;
+		mem_highgroups[groups_code] = 1;
+		dbg_code_high_stored += 1;
+		return 1;
 	}
 
-	return 0;
+	mem_highgroups[groups_code] = sum;
+	dbg_code_high_stored += 1;
+	return sum;
 }
+
+int64_t eval_groups(
+	int pos,
+	int64_t digitfactor,
+	int nzcount,
+	std::vector<int8_t>& digits,
+	std::vector<DigitGroup>& groups,
+	int8_t groupcount,
+	std::vector<int64_t>& arr_distr,
+	int64_t& sum
+	)
+{
+	static std::unordered_map<int64_t, std::pair<int64_t,int64_t>> mem_lowgroups;
+
+	int64_t groups_code = encode_groupscounts(pos, groups, groupcount);
+	auto mem_it = mem_lowgroups.find(groups_code);
+	if (mem_it != mem_lowgroups.end())
+	{
+		dbg_code_low_used += 1;
+		int64_t val = mem_it->second.first;
+		sum = mem_it->second.second;
+		return val;
+	}
+
+	int64_t count = 0;
+	if (pos < MODSIGLIMIT)
+	{
+		assert(nzcount > 0);
+
+		for (int8_t i = 0; i < groupcount; i++)
+		{
+			if (groups[i].remaining > 0)
+			{
+				int8_t digit = groups[i].digit;
+				groups[i].remaining -= 1;
+				digits[pos] = digit;
+				int new_nzcount = digit == 0 ? nzcount : nzcount - 1;
+				int64_t val = 1;
+				if (new_nzcount != 0)
+				{
+					val = eval_groups(pos + 1, digitfactor * 10, new_nzcount, digits, groups, groupcount, arr_distr, sum);
+				}
+				if (digit != 0)
+					arr_distr[i * MODSIGLIMIT + pos] += val;
+
+				count += val;
+				sum += val * digit * digitfactor;
+				if (sum >= MODLIMIT)
+				{
+					sum %= MODLIMIT;
+					modwrap_count += 1;
+					modwrap_count_z += 1;
+				}
+				groups[i].remaining += 1;
+			}
+		}
+	}
+	else
+	{
+		// filled first MODSIGLIMIT digits, so we can calculate the number of combinations for this distribution of digits.
+
+		int64_t rcount = 1;
+		if (nzcount != 0)
+			rcount = eval_groups_highdigits(pos, nzcount, groups, groupcount);
+
+		dbg_sequence_count += 1;
+		return rcount;
+	}
+	
+	mem_lowgroups[groups_code] = std::pair<int64_t, int64_t>(count, sum);
+	dbg_code_low_stored += 1;
+	return count;
+}
+
+
 
 int64_t sum_groups(std::vector<DigitGroup>& groups)
 {
 	int nzcount = 0;
+	int64_t count = 0;
 	int64_t sum = 0;
 	std::vector<DigitGroup> tmpGroups = groups;
 	std::vector<int8_t> tmpDigits (DIGITCOUNT, 0);
@@ -146,16 +272,22 @@ int64_t sum_groups(std::vector<DigitGroup>& groups)
 	}
 	int group_count = (int)tmpGroups.size();
 	if (nzcount < DIGITCOUNT)
-		tmpGroups.push_back(DigitGroup(0, std::min(MODSIGLIMIT-1, DIGITCOUNT - nzcount)));
+	{
+		//tmpGroups.push_back(DigitGroup(0, std::min(MODSIGLIMIT - 1, DIGITCOUNT - nzcount)));
+		tmpGroups.push_back(DigitGroup(0, DIGITCOUNT - nzcount));
+	}
 	
 	dbg_sum_groups_count += 1;
-	if (dbg_sum_groups_count % 100 == 0)
+	if (dbg_sum_groups_count % 100000 == 0)
 	{
 		std::cout << "dbg_sum_groups_count: " << dbg_sum_groups_count << std::endl;
-		if (dbg_sum_groups_count == 1000)
+		if (dbg_sum_groups_count == 1000000)
 			exit(0);
 	}
-	sum = eval_groups(0, nzcount, tmpDigits, tmpGroups, (int8_t) tmpGroups.size());
+
+	std::vector<int64_t> arr_distr(10 * MODSIGLIMIT, 0);
+
+	count = eval_groups(0, 1, nzcount, tmpDigits, tmpGroups, (int8_t) tmpGroups.size(), arr_distr, sum);
 
 	//std::vector<DigitGroup> groups;
 	return 0;
@@ -406,7 +538,7 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 		if (is_square(sq_new_sum))
 		{
 			square_count += 1;
-			count += count_digitcombinations(digit_arr,0, pos+1);
+			count += sum_digitcombinations(digit_arr,0, pos+1);
 			if (count >= MODLIMIT)
 			{
 				count %= MODLIMIT;
@@ -465,6 +597,9 @@ void test()
 
 	std::cout << "MODSIGLIMIT: " << MODSIGLIMIT << std::endl;
 
+	int64_t NineNines = 1 * (2 * 2 * 2 * 2 * 2 * 2 * 2 * 2);
+	std::cout << "NineNines" << NineNines << std::endl;
+
 	//std::cout << zdistr(2) << std::endl, std::cout << zdistr(3) << std::endl;
 
 	//int8_t test_arr[]{ 1,2 };
@@ -479,7 +614,7 @@ void test()
 
 	int8_t test_arr[]{ 1,2 };
 	test_setarr(test_arr, 2);
-	int64_t test_comb = count_digitcombinations(digit_grouped_arr, 0, 2);
+	int64_t test_comb = sum_digitcombinations(digit_grouped_arr, 0, 2);
 	std::cout << "test_comb: " << test_comb << std::endl;
 
 	std::vector<int8_t> test_vec(20,0);
@@ -574,6 +709,11 @@ int64_t solve()
 	std::cout << "sum: " << sum << std::endl;
 	std::cout << "count: " << count << std::endl;
 	std::cout << "dbg_sequence_count: " << dbg_sequence_count << std::endl;
+	std::cout << "dbg_sum_groups_count: " << dbg_sum_groups_count << std::endl;
+	std::cout << "dbg_code_high_used: " << dbg_code_high_used << std::endl;
+	std::cout << "dbg_code_high_stored: " << dbg_code_high_stored << std::endl;
+	std::cout << "dbg_code_low_used: " << dbg_code_low_used << std::endl;
+	std::cout << "dbg_code_low_stored: " << dbg_code_low_stored << std::endl;
 
 	return count;
 }
