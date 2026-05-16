@@ -38,18 +38,22 @@ public:
 		digit = 0;
 		count = 0;
 		remaining = 0;
+		acc = 0;
 	}
 	DigitGroup(int8_t digit, int count)
 	{
 		this->digit = digit;
 		this->count = count;
 		this->remaining = count;
+		this->acc = 0;
 	}
+
 	DigitGroup(const DigitGroup& other)
 	{
 		this->digit = other.digit;
 		this->count = other.count;
 		this->remaining = other.remaining;
+		this->acc = other.acc;
 	}
 
 	bool operator < (const DigitGroup& other) const
@@ -64,7 +68,10 @@ public:
 	int8_t digit;
 	int count;
 	int remaining;
+	int64_t acc;
 };
+
+typedef std::vector<DigitGroup> groups_t;
 
 class ModNumbers {
 public:
@@ -108,7 +115,7 @@ public:
 bool ModNumbers::initialized = false;
 std::vector<int64_t> ModNumbers::digitPow10;
 
-int64_t encode_groupscounts(int pos, std::vector<DigitGroup>& groups, int grouplen)
+int64_t encode_groupscounts(int pos, groups_t& groups, int grouplen)
 {
 	int ix = 0;
 	int i = 0;
@@ -142,7 +149,7 @@ int64_t encode_groupscounts(int pos, std::vector<DigitGroup>& groups, int groupl
 int64_t eval_groups_highdigits(
 	int pos,
 	int nzcount,
-	std::vector<DigitGroup>& groups,
+	groups_t& groups,
 	int8_t groupcount
 	)
 {
@@ -196,7 +203,7 @@ int64_t eval_groups_highdigits(
 
 void set_acc(
 	int digitcount,
-	std::vector<DigitGroup>& groups,
+	groups_t& groups,
 	int8_t groupcount,
 	std::vector<int8_t>& vseq,
 	std::vector<int64_t>& vacc,
@@ -231,7 +238,7 @@ void set_acc(
 
 void adjust_groups(
 	int decreased_pos,
-	std::vector<DigitGroup>& groups,
+	groups_t& groups,
 	int& swapcount)
 {
 	int _swapcount = 0;
@@ -253,7 +260,7 @@ void adjust_groups(
 
 void restore_groups(
 	int decreased_pos,
-	std::vector<DigitGroup>& groups,
+	groups_t& groups,
 	int swapcount)
 {
 	for (int i = decreased_pos + swapcount -1; i >= decreased_pos; i--)
@@ -263,20 +270,59 @@ void restore_groups(
 	}
 }
 
+
+struct state_t {
+	int64_t rcount;
+	int64_t sum;
+	int64_t count;
+	groups_t groups;
+};
+
+void load_state(
+	state_t& state,
+	int64_t& rcount,
+	int64_t& sum,
+	int64_t& count,
+	groups_t& groups
+)
+{
+	rcount = state.rcount;
+	sum = state.sum;
+	count = state.count;
+	int grouplen = state.groups.size();
+	int ix2 = 0;
+	for (int ix1 = 0; ix1 < grouplen; ix1++)
+	{
+		if (state.groups[ix1].digit == 0)
+			continue;
+		if (state.groups[ix1].remaining == 0)
+			continue;
+		while (groups[ix2].remaining == 0 || groups[ix2].digit == 0)
+			ix2 += 1;
+
+		assert(groups[ix1].remaining == state.groups[ix2].remaining);
+		//assert(groups[i].count == state.groups[i].count);
+		groups[ix2].acc = state.groups[ix1].acc;
+		ix2 += 1;
+	}
+}
+
 int64_t eval_groups(
 	int pos,
-	int64_t digitfactor,
+	int64_t f10,
 	int nzcount,
-	std::vector<DigitGroup>& groups,
+	groups_t& groups,
 	int8_t groupcount,
 	std::vector<int64_t>& arr_distr,
 	std::vector<int8_t>& vseq,
 	std::vector<int64_t>& vacc,
 	int64_t& sum,
+	int64_t& rcount,
 	int8_t lastgroupix
 	)
 {
-	static std::unordered_map<int64_t, std::pair<int64_t,int64_t>> mem_lowgroups;
+	//static std::unordered_map<int64_t, std::pair<int64_t,int64_t>> mem_lowgroups;
+	static std::unordered_map<int64_t, state_t> mem_lowgroups;
 	int64_t groups_code = 0;
 
 	if (pos == 0)
@@ -297,8 +343,8 @@ int64_t eval_groups(
 		if (mem_it != mem_lowgroups.end())
 		{
 			dbg_code_low_used += 1;
-			int64_t val = mem_it->second.first;
-			sum = mem_it->second.second;
+			int64_t val = mem_it->second.count;
+			sum = mem_it->second.sum;
 			return val;
 		}
 	}
@@ -311,6 +357,9 @@ int64_t eval_groups(
 		int swapcount = 0;
 		if (pos > 0)
 		{
+			//if (nzcount == 12 && pos == 8 && groups.size() == 2)
+			//	std::cout << "halt here" << std::endl;
+
 			adjust_groups(lastgroupix, groups, swapcount);
 			groups_code = encode_groupscounts(pos, groups, groupcount);
 
@@ -326,8 +375,15 @@ int64_t eval_groups(
 			if (mem_it != mem_lowgroups.end())
 			{
 				dbg_code_low_used += 1;
-				int64_t val = mem_it->second.first;
-				sum = mem_it->second.second;
+				int64_t val = 0;
+				load_state(
+					mem_it->second,
+					rcount,
+					sum,
+					val,
+					groups
+					);
+
 				if (swapcount > 0)
 					restore_groups(lastgroupix, groups, swapcount);
 				return val;
@@ -346,7 +402,7 @@ int64_t eval_groups(
 				int64_t val = 1;
 				if (new_nzcount != 0)
 				{
-					val = eval_groups(pos + 1, digitfactor * 10, new_nzcount, groups, groupcount, arr_distr, vseq, vacc, sum, i);
+					val = eval_groups(pos + 1, f10 * 10, new_nzcount, groups, groupcount, arr_distr, vseq, vacc, sum, rcount, i);
 				}
 				else
 				{
@@ -359,7 +415,7 @@ int64_t eval_groups(
 					arr_distr[i * MODSIGLIMIT + pos] += val;
 
 				count += val;
-				sum += val * digit * digitfactor;
+				sum += val * digit * f10;
 				if (sum >= MODLIMIT)
 				{
 					sum %= MODLIMIT;
@@ -369,7 +425,13 @@ int64_t eval_groups(
 				groups[i].remaining += 1;
 			}
 		}
-		mem_lowgroups[groups_code] = std::pair<int64_t, int64_t>(count, sum);
+
+		mem_lowgroups[groups_code] = state_t{
+			sum = sum,
+			count = count,
+			rcount = rcount,
+			groups = groups
+			};
 		if (swapcount > 0)
 			restore_groups(lastgroupix, groups, swapcount);
 	}
@@ -383,47 +445,29 @@ int64_t eval_groups(
 
 		set_acc(pos, groups, groupcount, vseq, vacc, rcount);
 
-		//int64_t f10 = 1;
-		//for (int i=0 ; i < MODSIGLIMIT ; i++)
-		//{
-		//	int8_t digit = vseq[i];
-		//	if (digit != 0)
-		//	{
-		//		for (int j = 0; j < groupcount; j++)
-		//		{
-		//			if (vseq[j] == digit)
-		//			{
-		//				int64_t acc = rcount * f10;
-		//				if (acc >= MODLIMIT)
-		//				{
-		//					acc %= MODLIMIT;
-		//					modwrap_count += 1;
-		//					modwrap_count_s += 1;
-		//					break;
-		//				}
-		//				vacc[j] += acc;
-		//			}
-		//		}
-		//	}
-		//	f10 *= 10;
-		//}
 		dbg_sequence_count += 1;
 		return rcount;
 	}
 	
-	mem_lowgroups[groups_code] = std::pair<int64_t, int64_t>(count, sum);
+	mem_lowgroups[groups_code] = state_t { //std::pair<int64_t, int64_t>(count, sum);
+		sum = sum,
+		count = count,
+		rcount = rcount,
+		groups = groups
+		};
+
 	dbg_code_low_stored += 1;
 	return count;
 }
 
 
 
-int64_t sum_groups(std::vector<DigitGroup>& groups)
+int64_t sum_groups(groups_t& groups)
 {
 	int nzcount = 0;
 	int64_t count = 0;
 	int64_t sum = 0;
-	std::vector<DigitGroup> tmpGroups = groups;
+	groups_t tmpGroups = groups;
 	for (DigitGroup g:tmpGroups)
 	{
 		assert(g.digit != 0);
@@ -450,7 +494,8 @@ int64_t sum_groups(std::vector<DigitGroup>& groups)
 
 	std::vector<int8_t> vseq(DIGITCOUNT, 0);
 	std::vector<int64_t> vacc(grouplen,0);
-	count = eval_groups(0, 1, nzcount, tmpGroups, grouplen, arr_distr, vseq, vacc, sum, -1);
+	int64_t rcount = 1;	// neutral value for multiplication, will be set to the result of eval_groups_highdigits when we reach the point where we can calculate it.
+	count = eval_groups(0, 1, nzcount, tmpGroups, grouplen, arr_distr, vseq, vacc, sum, rcount, -1);
 
 	//std::vector<DigitGroup> groups;
 	return 0;
@@ -593,7 +638,7 @@ int64_t	zdistr(int len)
 int64_t sum_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int len)
 {
 	int64_t sum = 0;
-	std::vector<DigitGroup> groups;
+	groups_t groups;
 	int8_t first_digit = digit_arr[startix];
 
 	assert(first_digit != 0);
@@ -633,7 +678,7 @@ int64_t count_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int
 
 	//assert(digitArr[startix] != 0);
 
-	std::vector<DigitGroup> groups;
+	groups_t groups;
 
 	int8_t first_digit = digit_arr[startix];
 
