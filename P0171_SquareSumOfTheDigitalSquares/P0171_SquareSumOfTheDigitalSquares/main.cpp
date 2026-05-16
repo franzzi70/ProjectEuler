@@ -28,6 +28,8 @@ int64_t dbg_code_high_used = 0;
 int64_t dbg_code_high_stored = 0;
 int64_t dbg_code_low_used = 0;
 int64_t dbg_code_low_stored = 0;
+int64_t dbg_swap_count = 0;
+int64_t dbg_unswap_count = 0;
 
 class DigitGroup {
 public:
@@ -56,7 +58,7 @@ public:
 			return false;
 		if (other.digit == 0)
 			return true;
-		return remaining < other.remaining;
+		return remaining > other.remaining;
 	}
 
 	int8_t digit;
@@ -227,6 +229,39 @@ void set_acc(
 	}
 }
 
+void adjust_groups(
+	int decreased_pos,
+	std::vector<DigitGroup>& groups,
+	int& swapcount)
+{
+	int _swapcount = 0;
+	int remaining = groups[decreased_pos].remaining;
+	for (int i = decreased_pos; i < groups.size()-1; i++)
+	{
+		if (groups[i + 1].digit != 0)
+		{
+			if (groups[i+1].remaining > remaining)
+			{
+				std::swap(groups[i], groups[i + 1]);
+				_swapcount += 1;
+				dbg_swap_count += 1;
+			}
+		}
+	}
+	swapcount = _swapcount;
+}
+
+void restore_groups(
+	int decreased_pos,
+	std::vector<DigitGroup>& groups,
+	int swapcount)
+{
+	for (int i = decreased_pos + swapcount -1; i >= decreased_pos; i--)
+	{
+		std::swap(groups[i], groups[i + 1]);
+		dbg_unswap_count += 1;
+	}
+}
 
 int64_t eval_groups(
 	int pos,
@@ -237,10 +272,13 @@ int64_t eval_groups(
 	std::vector<int64_t>& arr_distr,
 	std::vector<int8_t>& vseq,
 	std::vector<int64_t>& vacc,
-	int64_t& sum
+	int64_t& sum,
+	int8_t lastgroupix
 	)
 {
 	static std::unordered_map<int64_t, std::pair<int64_t,int64_t>> mem_lowgroups;
+	int64_t groups_code = 0;
+
 	if (pos == 0)
 	{
 		int  offset = 0;
@@ -249,9 +287,9 @@ int64_t eval_groups(
 			offset = 1;
 		}
 		std::sort(groups.begin(), groups.end() - offset);
+		groups_code = encode_groupscounts(pos, groups, groupcount);
 	}
 
-	int64_t groups_code = encode_groupscounts(pos, groups, groupcount);
 
 	if (pos == 0)
 	{
@@ -270,6 +308,33 @@ int64_t eval_groups(
 	{
 		assert(nzcount > 0);
 
+		int swapcount = 0;
+		if (pos > 0)
+		{
+			adjust_groups(lastgroupix, groups, swapcount);
+			groups_code = encode_groupscounts(pos, groups, groupcount);
+
+			int  offset = 0;
+			if (groups[groupcount - 1].digit == 0)
+			{
+				offset = 1;
+			}
+			// std::sort(groups.begin(), groups.end() - offset);
+			groups_code = encode_groupscounts(pos, groups, groupcount);
+
+			auto mem_it = mem_lowgroups.find(groups_code);
+			if (mem_it != mem_lowgroups.end())
+			{
+				dbg_code_low_used += 1;
+				int64_t val = mem_it->second.first;
+				sum = mem_it->second.second;
+				if (swapcount > 0)
+					restore_groups(lastgroupix, groups, swapcount);
+				return val;
+			}
+		}
+
+
 		for (int8_t i = 0; i < groupcount; i++)
 		{
 			if (groups[i].remaining > 0)
@@ -281,7 +346,7 @@ int64_t eval_groups(
 				int64_t val = 1;
 				if (new_nzcount != 0)
 				{
-					val = eval_groups(pos + 1, digitfactor * 10, new_nzcount, groups, groupcount, arr_distr, vseq, vacc, sum);
+					val = eval_groups(pos + 1, digitfactor * 10, new_nzcount, groups, groupcount, arr_distr, vseq, vacc, sum, i);
 				}
 				else
 				{
@@ -304,6 +369,9 @@ int64_t eval_groups(
 				groups[i].remaining += 1;
 			}
 		}
+		mem_lowgroups[groups_code] = std::pair<int64_t, int64_t>(count, sum);
+		if (swapcount > 0)
+			restore_groups(lastgroupix, groups, swapcount);
 	}
 	else
 	{
@@ -369,7 +437,7 @@ int64_t sum_groups(std::vector<DigitGroup>& groups)
 	}
 	
 	dbg_sum_groups_count += 1;
-	const int MODPRINT = 100;
+	const int MODPRINT = 10000;
 	if (dbg_sum_groups_count % MODPRINT == 0)
 	{
 		std::cout << "dbg_sum_groups_count: " << dbg_sum_groups_count << std::endl;
@@ -382,7 +450,7 @@ int64_t sum_groups(std::vector<DigitGroup>& groups)
 
 	std::vector<int8_t> vseq(DIGITCOUNT, 0);
 	std::vector<int64_t> vacc(grouplen,0);
-	count = eval_groups(0, 1, nzcount, tmpGroups, grouplen, arr_distr, vseq, vacc, sum);
+	count = eval_groups(0, 1, nzcount, tmpGroups, grouplen, arr_distr, vseq, vacc, sum, -1);
 
 	//std::vector<DigitGroup> groups;
 	return 0;
@@ -809,6 +877,8 @@ int64_t solve()
 	std::cout << "dbg_code_high_stored: " << dbg_code_high_stored << std::endl;
 	std::cout << "dbg_code_low_used: " << dbg_code_low_used << std::endl;
 	std::cout << "dbg_code_low_stored: " << dbg_code_low_stored << std::endl;
+	std::cout << "dbg_swap_count: " << dbg_swap_count << std::endl;
+	std::cout << "dbg_unswap_count: " << dbg_unswap_count << std::endl;
 
 	return count;
 }
