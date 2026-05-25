@@ -121,6 +121,7 @@ int64_t encode_groupscounts(int pos, groups_t& groups, int grouplen)
 	int i = 0;
 	int shift = 0;
 	static int8_t buf[10];
+	int z_remaining = 0;
 	//std::array<int8_t, 10> buf;
 	while (i < grouplen)
 	{
@@ -130,6 +131,10 @@ int64_t encode_groupscounts(int pos, groups_t& groups, int grouplen)
 			{
 				buf[ix] = groups[i].remaining;
 				ix += 1;
+			}
+			else
+			{
+				z_remaining = groups[i].remaining;
 			}
 		}
 		i++;
@@ -142,6 +147,8 @@ int64_t encode_groupscounts(int pos, groups_t& groups, int grouplen)
 		shift += 5;
 	}
 	int pos_shift = 5 * 10;
+	val += ((int64_t)z_remaining) << pos_shift;
+	pos_shift += 5;
 	val += ((int64_t) pos) << pos_shift;
 	return val;
 }
@@ -210,6 +217,15 @@ struct state_t {
 	int matr_width;
 };
 
+void load_group(state_t& state, groups_t& gsrc, groups_t& gdst, int ixsrc, int ixdst, std::vector<int64_t>& matr, int matr_width)
+{
+	gdst[ixdst].acc = gsrc[ixsrc].acc;
+	for (int i = 0; i < matr_width; i++)
+	{
+		matr[ixdst * matr_width + i] = state.matr[ixsrc * matr_width + i];
+	}
+}
+
 void load_state(
 	state_t& state,
 	int64_t& count,
@@ -227,24 +243,38 @@ void load_state(
 	int matr_width = state.matr_width;
 	int8_t remaining = 0;
 	int8_t prev_remaining = -1;
+	int zix1 = -1;
 	while (ix<group_count)
 	{
 		remaining = tmpGroups[ix].remaining;
-		if (remaining != 0 && tmpGroups[ix].digit != 0)
+		int8_t digit = tmpGroups[ix].digit;
+		if (digit == 0)
+		{
+			zix1 = ix;
+		}
+		if (remaining != 0 && digit != 0)
 		{
 			if (prev_remaining != remaining)
 				ix2 = 0;
 			while (groups[ix2].remaining != remaining)
 				ix2++;
-			groups[ix2].acc = tmpGroups[ix].acc;
-			for (int i = 0; i < matr_width; i++)
-			{
-				matr[ix2 * matr_width + i] = state.matr[ix * matr_width + i];
-			}
+			load_group(state, tmpGroups, groups, ix, ix2, matr, matr_width);
 			ix2 += 1;
 			prev_remaining = remaining;
 		}
 		ix += 1;
+	}
+	if (zix1 != -1)
+	{
+		// find Zero group index in groups:
+		for (int zix2 = 0; zix2 < groups.size(); zix2++)
+		{
+			if (groups[zix2].digit == 0)
+			{
+				load_group(state, tmpGroups, groups, zix1, zix2, matr, matr_width);
+				break;
+			}
+		}
 	}
 }
 
@@ -334,7 +364,9 @@ int64_t eval_groups_rec(
 					else
 					{
 						std::vector<int64_t> matr(groupcount * (matr_width), 0);
-						int64_t val = eval_groups_rec(pos + 1, f10 * 10, new_nzcount, groups, groupcount, matr);
+						int64_t val = 1;
+						if (nzcount >0)
+							val = eval_groups_rec(pos + 1, f10 * 10, new_nzcount, groups, groupcount, matr);
 						count += val;
 						for (int ix = 0; ix < matr_width; ix++)
 						{
