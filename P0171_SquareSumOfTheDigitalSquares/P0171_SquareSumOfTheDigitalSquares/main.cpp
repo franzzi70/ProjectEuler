@@ -12,11 +12,16 @@
 const int64_t MODLIMIT = 1'000'000'000;
 const int MODSIGLIMIT = (int) floor(0.1 + log(MODLIMIT) / log(10));
 
+#define DBG_PRINT
+//#undef DBG_PRINT
+
 std::vector<int8_t> digit_grouped_arr(DIGITCOUNT + 1, -1);
 int assignCounter = 0;
 int sq_sum = 0;
 int square_count = 0;
 std::vector<int64_t>mem_comb((DIGITCOUNT + 1 ) * (DIGITCOUNT + 1), 0);
+
+#ifdef DBG_PRINT
 int64_t modwrap_count = 0;
 int64_t modwrap_count_z = 0;
 int64_t modwrap_count_s = 0;
@@ -30,6 +35,8 @@ int64_t dbg_code_low_used = 0;
 int64_t dbg_code_low_stored = 0;
 int64_t dbg_swap_count = 0;
 int64_t dbg_unswap_count = 0;
+int64_t dbg_current_max_matrval = 0;
+#endif
 
 class DigitGroup {
 public:
@@ -167,7 +174,9 @@ int64_t eval_groups_highdigits(
 	auto mem_it = mem_highgroups.find(groups_code);
 	if (mem_it != mem_highgroups.end())
 	{
+#ifdef DBG_PRINT
 		dbg_code_high_used += 1;
+#endif
 		int64_t val = mem_it->second;
 		return val;
 	}
@@ -198,14 +207,18 @@ int64_t eval_groups_highdigits(
 	{
 		// filled first MODSIGLIMIT digits, so we can calculate the number of combinations for this distribution of digits.
 
-		dbg_sequence_count += 1;
 		mem_highgroups[groups_code] = 1;
+#ifdef DBG_PRINT
+		dbg_sequence_count += 1;
 		dbg_code_high_stored += 1;
+#endif
 		return 1;
 	}
 
 	mem_highgroups[groups_code] = sum;
+#ifdef DBG_PRINT
 	dbg_code_high_stored += 1;
+#endif
 	return sum;
 }
 
@@ -297,7 +310,9 @@ int64_t eval_groups_rec(
 		auto mem_it = mem_lowgroups.find(groups_code);
 		if (mem_it != mem_lowgroups.end())
 		{
+#ifdef DBG_PRINT
 			dbg_code_low_used += 1;
+#endif
 			int64_t val = mem_it->second.count;
 			return val;
 		}
@@ -326,7 +341,9 @@ int64_t eval_groups_rec(
 			auto mem_it = mem_lowgroups.find(groups_code);
 			if (mem_it != mem_lowgroups.end())
 			{
+#ifdef DBG_PRINT
 				dbg_code_low_used += 1;
+#endif
 				load_state(
 					mem_it->second,
 					count,
@@ -359,7 +376,9 @@ int64_t eval_groups_rec(
 
 						parent_matr[i * (matr_width +1)] = rcount;
 						count += rcount;
+#ifdef DBG_PRINT
 						dbg_sequence_count += 1;
+#endif
 					}
 					else
 					{
@@ -376,6 +395,13 @@ int64_t eval_groups_rec(
 							}
 						}
 						parent_matr[i * (matr_width + 1)] += val;
+#ifdef DBG_PRINT
+						if (parent_matr[i * (matr_width + 1)] > dbg_current_max_matrval)
+						{
+							dbg_current_max_matrval = parent_matr[i * (matr_width + 1)];
+							std::cout << "new max value: " << dbg_current_max_matrval << std::endl;
+						}
+#endif
 					}
 
 				}
@@ -397,8 +423,10 @@ int64_t eval_groups_rec(
 				if (acc_sum >= MODLIMIT)
 				{
 					acc_sum %= MODLIMIT;
+#ifdef DBG_PRINT
 					modwrap_count += 1;
 					modwrap_count_s += 1;
+#endif
 				}
 			}
 			return acc_sum;
@@ -418,7 +446,9 @@ int64_t eval_groups_rec(
 		MODSIGLIMIT - pos // parent matrix width
 		};
 
+#ifdef DBG_PRINT
 	dbg_code_low_stored += 1;
+#endif
 	return count;
 }
 
@@ -450,6 +480,7 @@ int64_t sum_groups(groups_t& groups)
 		tmpGroups.push_back(DigitGroup(0, DIGITCOUNT - nzcount));
 	}
 	
+#ifdef DBG_PRINT
 	dbg_sum_groups_count += 1;
 	const int MODPRINT = 10000;
 	if (dbg_sum_groups_count % MODPRINT == 0)
@@ -458,6 +489,7 @@ int64_t sum_groups(groups_t& groups)
 		if (dbg_sum_groups_count == MODPRINT * 100)
 			exit(0);
 	}
+#endif
 
 	sum = eval_groups(nzcount, tmpGroups);
 
@@ -652,8 +684,10 @@ int64_t count_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int
 			if (result >= MODLIMIT)
 			{
 				result %= MODLIMIT;
+#ifdef DBG_PRINT
 				modwrap_count += 1;
 				modwrap_count_dc += 1;
+#endif
 			}
 		}
 	}
@@ -667,8 +701,10 @@ int64_t count_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int
 	if (result >= MODLIMIT)
 	{
 		result %= MODLIMIT;
+#ifdef DBG_PRINT
 		modwrap_count += 1;
 		modwrap_count_dc2 += 1;
+#endif
 	}
 
 	return result;
@@ -694,28 +730,34 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 			if (count >= MODLIMIT)
 			{
 				count %= MODLIMIT;
+#ifdef DBG_PRINT
 				modwrap_count += 1;
 				modwrap_count_s += 1;
+#endif
 			}
 
 			sum += ms.getArrayModNumber(pos + 1);
 			if (sum >= MODLIMIT)
 			{
 				sum %= MODLIMIT;
+#ifdef DBG_PRINT
 				modwrap_count += 1;
 				modwrap_count_z += 1;
+#endif
 			}
 			//std::cout << "SQUARE FOUND: " << sq_new_sum << "(";
 			//printDigitArr(pos+1);
 			//std::cout << ")" << std::endl;
 		}
 
+#ifdef DBG_PRINT
 		if ((assignCounter % 100000) == 0)
 		{
 			std::cout << assignCounter << ": ";
 			printDigitArr(21);
 			std::cout << std::endl;
 		}
+#endif
 
 		if (pos < (DIGITCOUNT -1))
 		{
@@ -723,16 +765,20 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 			if (count >= MODLIMIT)
 			{
 				count %= MODLIMIT;
+#ifdef DBG_PRINT
 				modwrap_count += 1;
 				modwrap_count_s += 1;
+#endif
 			}
 		}
 	}
 	if (count >= MODLIMIT)
 	{
 		count %= MODLIMIT;
+#ifdef DBG_PRINT
 		modwrap_count += 1;
 		modwrap_count_s += 1;
+#endif
 	}
 	return sum;
 }
@@ -853,13 +899,12 @@ int64_t solve()
 	std::cout << "variations(0," << DIGITCOUNT << ") = " << count << std::endl;
 	std::cout << "squares found:" << square_count << std::endl;
 
+#ifdef DBG_PRINT
 	std::cout << "modwrap_count: " << modwrap_count << std::endl;
 	std::cout << "modwrap_count_z: " << modwrap_count_z << std::endl;
 	std::cout << "modwrap_count_s: " << modwrap_count_s << std::endl;
 	std::cout << "modwrap_count_dc: " << modwrap_count_dc << std::endl;
 	std::cout << "modwrap_count_dc2: " << modwrap_count_dc2 << std::endl;
-	std::cout << "sum: " << sum << std::endl;
-	std::cout << "count: " << count << std::endl;
 	std::cout << "dbg_sequence_count: " << dbg_sequence_count << std::endl;
 	std::cout << "dbg_sum_groups_count: " << dbg_sum_groups_count << std::endl;
 	std::cout << "dbg_code_high_used: " << dbg_code_high_used << std::endl;
@@ -868,6 +913,9 @@ int64_t solve()
 	std::cout << "dbg_code_low_stored: " << dbg_code_low_stored << std::endl;
 	std::cout << "dbg_swap_count: " << dbg_swap_count << std::endl;
 	std::cout << "dbg_unswap_count: " << dbg_unswap_count << std::endl;
+#endif
+	std::cout << "sum: " << sum << std::endl;
+	std::cout << "count: " << count << std::endl;
 
 	return count;
 }
