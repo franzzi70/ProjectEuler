@@ -369,7 +369,7 @@ int64_t eval_groups_rec(
 					int64_t rcount = 1;
 					if (pos == MODSIGLIMIT-1)
 					{
-						if (nzcount != 0)
+						if (new_nzcount != 0)
 						{
 							rcount = eval_groups_highdigits(pos, nzcount, groups, groupcount);
 						}
@@ -384,8 +384,13 @@ int64_t eval_groups_rec(
 					{
 						std::vector<int64_t> matr(groupcount * (matr_width), 0);
 						int64_t val = 1;
-						if (nzcount >0)
+						if (new_nzcount >0)
 							val = eval_groups_rec(pos + 1, f10 * 10, new_nzcount, groups, groupcount, matr);
+						//else
+						//{
+						//	if (digit == 0)
+						//		val = 0;
+						//}
 						count += val;
 						for (int ix = 0; ix < matr_width; ix++)
 						{
