@@ -199,9 +199,14 @@ int64_t eval_groups_highdigits(
 					val = eval_groups_highdigits(pos + 1, new_nzcount, groups, groupcount);
 				}
 				sum += val;
+				if (sum >= MODLIMIT)
+				{
+					sum %= MODLIMIT;
+				}
 				groups[i].remaining += 1;
 			}
 		}
+
 	}
 	else
 	{
@@ -371,7 +376,7 @@ int64_t eval_groups_rec(
 					{
 						if (new_nzcount != 0)
 						{
-							rcount = eval_groups_highdigits(pos, nzcount, groups, groupcount);
+							rcount = eval_groups_highdigits(pos +1, nzcount, groups, groupcount);
 						}
 
 						parent_matr[i * (matr_width +1)] = rcount;
@@ -465,7 +470,69 @@ int64_t eval_groups(
 	int groupcount = (int)groups.size();
 	std::vector<int64_t> matr(groupcount * (MODSIGLIMIT), 0);
 	int64_t count = eval_groups_rec(0, 1, nzcount, groups, groupcount, matr);
-	return count;
+
+	int64_t acc_sum = 0;
+
+	// FINAL STEP after all these recursions: calucalate the overall sum using the acc values of the groups,
+	int64_t f10 = 1;
+	for (int dx = 0; dx < MODSIGLIMIT; dx++)
+	{
+		for (int8_t i = 0; i < groupcount; i++)
+		{
+			int64_t acc = matr[i*MODSIGLIMIT+dx];
+			if (acc >= MODLIMIT)
+			{
+				acc %= MODLIMIT;
+#ifdef DBG_PRINT
+				modwrap_count += 1;
+				modwrap_count_s += 1;
+#endif
+			}
+			int8_t digit = groups[i].digit;
+			if (digit != 0)
+			{
+				int64_t val = acc * digit * f10;
+				if (val >= MODLIMIT)
+				{
+					val %= MODLIMIT;
+#ifdef DBG_PRINT
+					modwrap_count += 1;
+					modwrap_count_s += 1;
+#endif
+				}
+
+				acc_sum += val;
+
+				if (acc_sum >= MODLIMIT)
+				{
+					acc_sum %= MODLIMIT;
+#ifdef DBG_PRINT
+					modwrap_count += 1;
+					modwrap_count_s += 1;
+#endif
+				}
+			}
+		}
+		f10 *= 10;
+	}
+
+	return acc_sum;
+}
+
+int64_t calc_groups(
+	int nzcount,
+	groups_t& groups
+)
+{
+	int64_t sum = 0;
+	int  groupcount = (int)groups.size();
+	std::vector<int64_t>matr(groupcount * (MODSIGLIMIT), 0);
+
+	for (int i = 0; i < groupcount; i++)
+	{
+
+	}
+	return sum;
 }
 
 int64_t sum_groups(groups_t& groups)
@@ -497,6 +564,7 @@ int64_t sum_groups(groups_t& groups)
 #endif
 
 	sum = eval_groups(nzcount, tmpGroups);
+	int64_t sum2 = calc_groups(nzcount, tmpGroups);
 
 	//std::vector<DigitGroup> groups;
 	return sum;
@@ -715,12 +783,11 @@ int64_t count_digitcombinations(std::vector<int8_t>& digit_arr, int startix, int
 	return result;
 }
 
-int64_t sum = 0;
-int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos, int sq_sum)
+int64_t calcVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos, int sq_sum)
 {
 	assert(pos < DIGITCOUNT);
 	
-	int64_t count = 0;
+	int64_t sum = 0;
 	for (int i = digitLimit; i <= 9; i++)
 	{
 		digit_arr[pos] = i;
@@ -731,25 +798,17 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 		if (is_square(sq_new_sum))
 		{
 			square_count += 1;
-			count += sum_digitcombinations(digit_arr,0, pos+1);
-			if (count >= MODLIMIT)
+			int64_t sum_rec = sum_digitcombinations(digit_arr, 0, pos + 1);
+			sum += sum_rec;
+			if (sum >= MODLIMIT)
 			{
-				count %= MODLIMIT;
+				sum %= MODLIMIT;
 #ifdef DBG_PRINT
 				modwrap_count += 1;
 				modwrap_count_s += 1;
 #endif
 			}
 
-			sum += ms.getArrayModNumber(pos + 1);
-			if (sum >= MODLIMIT)
-			{
-				sum %= MODLIMIT;
-#ifdef DBG_PRINT
-				modwrap_count += 1;
-				modwrap_count_z += 1;
-#endif
-			}
 			//std::cout << "SQUARE FOUND: " << sq_new_sum << "(";
 			//printDigitArr(pos+1);
 			//std::cout << ")" << std::endl;
@@ -759,17 +818,17 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 		if ((assignCounter % 100000) == 0)
 		{
 			std::cout << assignCounter << ": ";
-			printDigitArr(21);
+			printDigitArr(DIGITCOUNT+1);
 			std::cout << std::endl;
 		}
 #endif
 
 		if (pos < (DIGITCOUNT -1))
 		{
-			count += countVariations(digit_arr, i, pos+1, sq_new_sum);
-			if (count >= MODLIMIT)
+			sum += calcVariations(digit_arr, i, pos+1, sq_new_sum);
+			if (sum >= MODLIMIT)
 			{
-				count %= MODLIMIT;
+				sum %= MODLIMIT;
 #ifdef DBG_PRINT
 				modwrap_count += 1;
 				modwrap_count_s += 1;
@@ -777,9 +836,9 @@ int64_t countVariations(std::vector<int8_t>& digit_arr, int digitLimit, int pos,
 			}
 		}
 	}
-	if (count >= MODLIMIT)
+	if (sum >= MODLIMIT)
 	{
-		count %= MODLIMIT;
+		sum %= MODLIMIT;
 #ifdef DBG_PRINT
 		modwrap_count += 1;
 		modwrap_count_s += 1;
@@ -820,7 +879,7 @@ void test()
 	int64_t test_comb = sum_digitcombinations(digit_grouped_arr, 0, 2);
 	std::cout << "test_comb: " << test_comb << std::endl;
 
-	std::vector<int8_t> test_vec(20,0);
+	std::vector<int8_t> test_vec(DIGITCOUNT, 0);
 	test_vec[0] = 1;
 	test_vec[1] = 2;
 	test_vec[2] = 7;
@@ -900,8 +959,8 @@ int64_t solve()
 {
 	//test();
 
-	int64_t count = (countVariations(digit_grouped_arr, 1, 0, 0)) % MODLIMIT;	// start with 1, treat leading 0 separately for every found solution in digitcombinations function.
-	std::cout << "variations(0," << DIGITCOUNT << ") = " << count << std::endl;
+	int64_t sum = (calcVariations(digit_grouped_arr, 1, 0, 0)) % MODLIMIT;	// start with 1, treat leading 0 separately for every found solution in digitcombinations function.
+	std::cout << "variations(0," << DIGITCOUNT << ") = " << sum << std::endl;
 	std::cout << "squares found:" << square_count << std::endl;
 
 #ifdef DBG_PRINT
@@ -919,10 +978,9 @@ int64_t solve()
 	std::cout << "dbg_swap_count: " << dbg_swap_count << std::endl;
 	std::cout << "dbg_unswap_count: " << dbg_unswap_count << std::endl;
 #endif
-	std::cout << "sum: " << sum << std::endl;
-	std::cout << "count: " << count << std::endl;
+	std::cout << "count: " << sum << std::endl;
 
-	return count;
+	return sum;
 }
 
 int main()
