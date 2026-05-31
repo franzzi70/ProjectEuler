@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="P0172_FewRepeatedDigits/P0172_FewRepeatedDigits.vcxproj" />
+</Solution>
