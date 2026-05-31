@@ -168,6 +168,8 @@ int64_t eval_groups_highdigits(
 	int8_t groupcount
 	)
 {
+	assert(nzcount > 0);
+
 	static std::unordered_map<int64_t, int64_t> mem_highgroups;
 
 	int64_t groups_code = encode_groupscounts(pos, groups, groupcount);
@@ -184,7 +186,6 @@ int64_t eval_groups_highdigits(
 	int64_t sum = 0;
 	if (pos < DIGITCOUNT-1)
 	{
-		assert(nzcount > 0);
 
 		for (int8_t i = 0; i < groupcount; i++)
 		{
@@ -210,8 +211,6 @@ int64_t eval_groups_highdigits(
 	}
 	else
 	{
-		// filled first MODSIGLIMIT digits, so we can calculate the number of combinations for this distribution of digits.
-
 		mem_highgroups[groups_code] = 1;
 #ifdef DBG_PRINT
 		dbg_sequence_count += 1;
@@ -253,9 +252,18 @@ void load_state(
 {
 	count = state.count;
 	groups_t tmpGroups = state.groups;
-	std::sort(tmpGroups.begin(), tmpGroups.end());
-
 	int group_count = tmpGroups.size();
+	std::sort(tmpGroups.begin(), tmpGroups.end());
+	std::vector<int8_t> resort_map(10, -1);
+	for (int i = 0; i < group_count; i++)
+	{
+		int new_digit = tmpGroups[i].digit;
+		int prev_digit_ix = 0;
+		while (prev_digit_ix < group_count && state.groups[prev_digit_ix].digit != new_digit)
+			prev_digit_ix++;
+		resort_map[new_digit] = prev_digit_ix;
+	}
+
 	int ix = 0;
 	int ix2 = 0;
 	int matr_width = state.matr_width;
@@ -276,7 +284,8 @@ void load_state(
 				ix2 = 0;
 			while (groups[ix2].remaining != remaining)
 				ix2++;
-			load_group(state, tmpGroups, groups, ix, ix2, matr, matr_width);
+			int orig_ix1 = resort_map[digit];
+			load_group(state, state.groups, groups, orig_ix1, ix2, matr, matr_width);
 			ix2 += 1;
 			prev_remaining = remaining;
 		}
@@ -376,7 +385,7 @@ int64_t eval_groups_rec(
 					{
 						if (new_nzcount != 0)
 						{
-							rcount = eval_groups_highdigits(pos +1, nzcount, groups, groupcount);
+							rcount = eval_groups_highdigits(pos +1, new_nzcount, groups, groupcount);
 						}
 
 						parent_matr[i * (matr_width +1)] = rcount;
@@ -467,6 +476,7 @@ int64_t eval_groups(
 	groups_t& groups
 	)
 {
+	//std::sort(groups.begin(), groups.end());
 	int groupcount = (int)groups.size();
 	std::vector<int64_t> matr(groupcount * (MODSIGLIMIT), 0);
 	int64_t count = eval_groups_rec(0, 1, nzcount, groups, groupcount, matr);
