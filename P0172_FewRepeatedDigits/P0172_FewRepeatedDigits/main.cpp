@@ -191,34 +191,91 @@ int64_t fac(int n)
 	return res;
 }
 
-int64_t pos_factor(int n)
+int64_t comb(int n, int k)
 {
-	static std::vector<int64_t> posfac_buf(10, 0);
-	if (posfac_buf[n] != 0)
+	int64_t result = 1;
+	//if (k > n)
+	//{
+	//	return 0;
+	//}
+	if (k == 0 || k == n)
 	{
-		return posfac_buf[n];
+		return 1;
 	}
-	int f = 10;
+	int64_t numerator = 1;
+	int64_t denominator = 1;
+	for (int i = 1; i <= k; i++)
+	{
+		numerator *= n - (i - 1);
+		denominator *= i;
+		result = numerator / denominator;
+	}
+	return result;	
+}
+
+//int64_t pos_factor(int n)
+//{
+//	static std::vector<int64_t> posfac_buf(10, 0);
+//	if (posfac_buf[n] != 0)
+//	{
+//		return posfac_buf[n];
+//	}
+//	int f = 10;
+//	int64_t prod = 1;
+//	for (int i = 0; i < n; i++)
+//	{
+//		prod *= f;
+//		f -= 1;
+//	}
+//	posfac_buf[n] = prod;
+//	return prod;
+//}
+
+int64_t pos_factor_comb(groups_t& groups, int groupcount)
+{
 	int64_t prod = 1;
-	for (int i = 0; i < n; i++)
+
+	groups_t tmpGroups = std::vector(groups.begin(), groups.begin()+groupcount);
+	std::sort(tmpGroups.begin(), tmpGroups.end());	// sort not needed because groups have already montone falling remaining counts.
+	int digits_left = 9;
+	int last_remaining = 0;
+	int membercount = 0;
+
+	for (int i = 0; i < groupcount; i++)
 	{
-		prod *= f;
-		f -= 1;
+		if (tmpGroups[i].digit == 0)
+		{
+			continue;
+		}
+		int  remaining = tmpGroups[i].remaining;
+		if (i > 0)
+		{
+			if (remaining != last_remaining)
+			{
+				prod *= comb(digits_left, membercount);
+				digits_left -= membercount;
+				membercount = 0;
+			}
+		}
+		membercount += 1;
+		last_remaining = remaining;
 	}
-	posfac_buf[n] = prod;
+	if (membercount > 0)
+	{
+		prod *= comb(digits_left, membercount);
+	}
 	return prod;
 }
 
 int64_t calcGroups_rec(
 	groups_t& groups,
-	int pos,
-	int groupcount,
+	int groupindex,
 	int nzcount,
-	int digits_used,
 	int high_limit,
-	std::vector<int64_t>& vresults
+	int64_t& overall_sum
 	)
 {
+	const int64_t dbg_2pow63m1 = ((uint64_t)1 << 63) - 1;
 
 #ifdef DBG_PRINT
 	calc_callcount += 1;
@@ -228,42 +285,48 @@ int64_t calcGroups_rec(
 	}
 #endif
 
-	//if (nzcount == DIGITCOUNT)
-	//{
-	//	return 1;	// TODO: actually permutations to be calculated.
-	//}
-
 	int64_t count = 0;
 	int64_t rec_count = 0;
 
-	if (pos < 10)
+	if (groupindex < 9)
 	{
-		int digitcount = groups[pos].count;
-		int remaing = groups[pos].remaining;
-		if (pos != 0)
+		int remaing = groups[groupindex].remaining;
+
+		if (groupindex != 0)
 		{
 			if (DIGITCOUNT - nzcount <= 3)
 			{
-				DigitGroup group_bak = groups[pos];
-				groups[pos].digit = 0;
-				groups[pos].count = DIGITCOUNT - nzcount;
-				groups[pos].remaining = DIGITCOUNT-nzcount;
-				groups[pos].acc = 0;
-				int8_t eval_groupcount = pos + 1;
+				DigitGroup group_bak = groups[groupindex];
+				groups[groupindex].digit = 0;
+				groups[groupindex].count = DIGITCOUNT - nzcount;
+				groups[groupindex].remaining = DIGITCOUNT - nzcount;
+				groups[groupindex].acc = 0;
+				int8_t eval_groupcount = groupindex + 1;
 				int eval_pos = 0;
 				count = eval_groups_highdigits(eval_pos, nzcount, groups, eval_groupcount);
-				groups[pos] = group_bak;
-				int64_t f = pos_factor(pos) / fac(pos);
+				int64_t f = pos_factor_comb(groups, eval_groupcount);
+				groups[groupindex] = group_bak;
 				int64_t count_permutations = count * f;
-				vresults[pos] += count_permutations;
+				overall_sum += count_permutations;
+				if (overall_sum > dbg_2pow63m1 * 0.9)
+					std::cout << "near overflow." << std::endl;
 			}
 		}
-		for (int i = 0; i <= high_limit; i++)
+
+		for (int i = 1; i <= high_limit; i++)
 		{
-			groups[pos].remaining += 1;
-			rec_count += calcGroups_rec(groups, pos + 1, groupcount, nzcount + i + 1, digits_used + 1, i, vresults);
+			int par_nzcount = i + nzcount;
+			if (par_nzcount > DIGITCOUNT)
+			{
+				break;
+			}
+			int par_high_limit = i;
+			groups[groupindex].remaining += 1;
+			assert(groups[groupindex].remaining <= 3);
+			rec_count += calcGroups_rec(groups, groupindex + 1, par_nzcount, par_high_limit, overall_sum);
 		}
-		groups[pos].remaining = remaing;
+		groups[groupindex].remaining = remaing;
+		assert(remaing == 0);
 	}
 	return rec_count;
 }
@@ -272,21 +335,13 @@ int64_t calcGroups_rec(
 int64_t calcGroups()
 {
 	groups_t groups;
-	std::vector<int64_t> vresults(10, 0);
+	int64_t acc_count = 0;
 
 	for (int i = 1; i <= 10; i++)
 	{
-		groups.push_back(DigitGroup(i, 3, 0));
+		groups.push_back(DigitGroup(i % 10, 3, 0));
 	}
-
-	int64_t count = calcGroups_rec(groups, 0, groups.size(), 0, 0, 3, vresults);
-	
-	int64_t acc_count = 0;
-	for (int i=1;i<10;i++)
-	{
-		acc_count += vresults[i];
-	
-	}
+	int64_t count = calcGroups_rec(groups, 0, 0, 3, acc_count);
 	return acc_count;
 }
 

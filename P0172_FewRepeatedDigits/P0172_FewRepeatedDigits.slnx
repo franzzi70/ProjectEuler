@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="P0172_FewRepeatedDigits/P0172_FewRepeatedDigits.vcxproj" />
+  <Project Path="P0172_FewRepeatedDigits/P0172_FewRepeatedDigits.vcxproj" Id="53424273-91ff-4bf5-8ca8-0eef7c927444" />
 </Solution>
