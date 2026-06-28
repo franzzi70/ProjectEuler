@@ -10,8 +10,11 @@ The program should calculate how many 18 digtit numbers withoutt leading zeroes 
 #include <algorithm>
 #include <cassert>
 
-//const int DIGITCOUNT = 18;
-const int DIGITCOUNT = 4;
+const int DIGITCOUNT = 18;
+const int DIGITLIMIT = 3;
+
+//const int DIGITCOUNT = 4;
+//const int DIGITLIMIT = 3;
 
 
 #define DBG_PRINT
@@ -143,12 +146,13 @@ int64_t mcombz(groups_t& groups, int groupsize, int zcount)
 	return result;
 }
 
-int64_t pos_factor_comb(groups_t& groups, int groupcount)
+int64_t rebase_mcomb(int64_t mcomb, groups_t& groups, int groupcount)
 {
 	int64_t prod = 1;
+	int64_t result = mcomb;
 
-	groups_t tmpGroups = std::vector(groups.begin(), groups.begin()+groupcount);
-	std::sort(tmpGroups.begin(), tmpGroups.end());	// sort not needed because groups have already montone falling remaining counts.
+	groups_t tmpGroups = std::vector(groups.begin(), groups.begin() + groupcount);
+	std::sort(tmpGroups.begin(), tmpGroups.end());
 	int digits_left = 9;
 	int last_count = 0;
 	int membercount = 0;
@@ -164,7 +168,7 @@ int64_t pos_factor_comb(groups_t& groups, int groupcount)
 		{
 			if (digit_count != last_count)
 			{
-				prod *= comb(digits_left, membercount);
+				prod *= fac(membercount);
 				digits_left -= membercount;
 				membercount = 0;
 			}
@@ -174,9 +178,63 @@ int64_t pos_factor_comb(groups_t& groups, int groupcount)
 	}
 	if (membercount > 0)
 	{
-		prod *= comb(digits_left, membercount);
+		prod *= fac(membercount);
+	}
+
+	result /= prod;
+	return result;
+}
+
+int64_t pos_factor_comb(groups_t& groups, int groupcount)
+{
+	int64_t prod = 1;
+
+	groups_t tmpGroups = std::vector(groups.begin(), groups.begin()+groupcount);
+	std::sort(tmpGroups.begin(), tmpGroups.end());
+	//int digits_left = 9;
+	int last_count = 0;
+	int membercount = 0;
+
+	for (int i = 0; i < groupcount; i++)
+	{
+		if (tmpGroups[i].digit == 0)
+		{
+			continue;
+		}
+		int digit_count = tmpGroups[i].count;
+		if (i > 0)
+		{
+			if (digit_count != last_count)
+			{
+				//prod *= comb(digits_left, membercount);
+				prod *= fac(membercount);
+				//digits_left -= membercount;
+				membercount = 0;
+			}
+		}
+		membercount += 1;
+		last_count = digit_count;
+	}
+	if (membercount > 0)
+	{
+		//prod *= comb(digits_left, membercount);
+		prod *= fac(membercount);
 	}
 	return prod;
+}
+
+int64_t f_materialized(int n)
+{
+	//int64_t result = 1;
+	//int64_t d = 9;
+	//for (int i = 0; i < n; i++)
+	//{
+	//	result *= d;
+	//	d -= 1;
+	//}
+	//return result;
+	//return comb(9, n);
+	return fac(n) * comb(9, n);
 }
 
 int64_t calcGroups_rec(
@@ -202,40 +260,55 @@ int64_t calcGroups_rec(
 	if (groupindex < 9)
 	{
 		int digit_count = groups[groupindex].count;
+		assert(digit_count == 0);
 
 		if (groupindex != 0)
 		{
-			if (DIGITCOUNT - nzcount <= 3)
+			if (DIGITCOUNT - nzcount <= DIGITLIMIT)
 			{
 
-				int64_t count = 1;
-
+				int64_t count = 0;
+				int64_t digitsfactor = f_materialized(groupindex);
+#ifdef DBG_PRINT
+				dbg_printGroups(groups, groupindex);
+				std::cout << " digitsfactor: " << digitsfactor << std::endl;
+#endif
 				// now position existing zeroes at allowed posisions:
 				int zcount = DIGITCOUNT - nzcount;
 				if (zcount > 0)
 				{
-					int64_t val1 = mcombz(groups, groupindex, zcount);
-					int64_t val2 = mcombz(groups, groupindex, zcount - 1);
+					int64_t mc1 = mcombz(groups, groupindex, zcount);
+					int64_t rb_mc1 = rebase_mcomb(mc1, groups, groupindex);
+					int64_t val1 = rb_mc1 * digitsfactor;
+
+					int64_t mc2 = mcombz(groups, groupindex, zcount - 1);
+					int64_t rb_mc2 = rebase_mcomb(mc2, groups, groupindex);
+					int64_t val2 = rb_mc2 * digitsfactor;
+
 					count = val1 - val2;
+
+#ifdef DBG_PRINT
+					std::cout << "mc1: " << mc1 << " rb_mc1: " << rb_mc1 << " val1: " << val1 << std::endl;
+					std::cout << "mc2: " << mc2 << " rb_mc2: " << rb_mc2 << " val2: " << val2 << std::endl;
+#endif
 				}
 				else
 				{
-					count = mcomb(groups, groupindex);
+					int64_t mc = mcomb(groups, groupindex);
+					int64_t rb_mc = rebase_mcomb(mc, groups, groupindex);
+					count = rb_mc * digitsfactor;
+#ifdef DBG_PRINT
+					std::cout << "mc: " << mc << " rb_mc: " << rb_mc << std::endl;
+#endif
 				}
 
-				// calculate permutations of actual digits for non-zeroes:
-				int64_t f = pos_factor_comb(groups, groupindex);
-
-				// now calculate the overall count of permutations for this group configuration:
-				int64_t count_permutations = count * f;
 #ifdef DBG_PRINT
 				dbg_eval_count += 1;
 				// print group using db_printGroups and count for debugging:
-				dbg_printGroups(groups, groupindex);
-				std::cout << " count: " << count << " f: " << f << " count_permutations: " << count_permutations << std::endl;
+				std::cout << " count: " << count << std::endl;
 
 #endif
-				overall_sum += count_permutations;
+				overall_sum += count;
 
 
 			}
@@ -250,10 +323,10 @@ int64_t calcGroups_rec(
 			}
 			int par_high_limit = i;
 			groups[groupindex].count += 1;
-			assert(groups[groupindex].count <= 3);
+			assert(groups[groupindex].count <= DIGITLIMIT);
 			rec_count += calcGroups_rec(groups, groupindex + 1, par_nzcount, par_high_limit, overall_sum);
 		}
-		groups[groupindex].count = digit_count;
+		groups[groupindex].count = digit_count; // reset count to original value (0) after recursions loop, before returning from recursion.
 		assert(digit_count == 0);
 	}
 	return rec_count;
@@ -269,13 +342,16 @@ int64_t calcGroups()
 	{
 		groups.push_back(DigitGroup(i % 10, 0));
 	}
-	int64_t count = calcGroups_rec(groups, 0, 0, 3, acc_count);
+	int64_t count = calcGroups_rec(groups, 0, 0, DIGITLIMIT, acc_count);
 	return acc_count;
 }
 
 
 int64_t solve()
 {
+#ifdef DBG_PRINT
+	std::cout << "Calculating how many " << DIGITCOUNT << " digit numbers without leading zeroes exist, which do not have any digit occuring more than " << DIGITLIMIT << " times.\n(" << DIGITCOUNT << "/" << DIGITLIMIT << ")" << std::endl;
+#endif
 	int64_t count = calcGroups();
 #ifdef DBG_PRINT
 	std::cout << log(count) / log(10) << " digits in solution" << std::endl;
