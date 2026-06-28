@@ -14,13 +14,8 @@ const bool ALLDIGITSPRESENT = false;
 const int DIGITCOUNT = 18;
 const int DIGITLIMIT = 3;
 
-//const int DIGITCOUNT = 11;
-//const int DIGITLIMIT = 3;
-
-//const int DIGITCOUNT = 8;
-//const int DIGITLIMIT = 7;
-
 #define DBG_PRINT
+//#undef DBG_PRINT
 
 #ifdef DBG_PRINT
 
@@ -189,43 +184,6 @@ int64_t rebase_mcomb(int64_t mcomb, groups_t& groups, int groupcount)
 	return result;
 }
 
-int64_t pos_factor_comb(groups_t& groups, int groupcount)
-{
-	int64_t prod = 1;
-
-	groups_t tmpGroups = std::vector(groups.begin(), groups.begin()+groupcount);
-	std::sort(tmpGroups.begin(), tmpGroups.end());
-	//int digits_left = 9;
-	int last_count = 0;
-	int membercount = 0;
-
-	for (int i = 0; i < groupcount; i++)
-	{
-		if (tmpGroups[i].digit == 0)
-		{
-			continue;
-		}
-		int digit_count = tmpGroups[i].count;
-		if (i > 0)
-		{
-			if (digit_count != last_count)
-			{
-				//prod *= comb(digits_left, membercount);
-				prod *= fac(membercount);
-				//digits_left -= membercount;
-				membercount = 0;
-			}
-		}
-		membercount += 1;
-		last_count = digit_count;
-	}
-	if (membercount > 0)
-	{
-		//prod *= comb(digits_left, membercount);
-		prod *= fac(membercount);
-	}
-	return prod;
-}
 
 int64_t f_materialized(int n)
 {
