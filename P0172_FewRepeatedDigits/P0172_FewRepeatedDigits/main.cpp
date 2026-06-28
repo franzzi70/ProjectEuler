@@ -78,6 +78,7 @@ void dbg_printGroups(groups_t& groups, int groupcount)
 
 int64_t fac(int n)
 {
+	assert(n <= 9);
 	static int64_t fac_buf[10] = { 1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880 };
 	if (n < 10)
 	{
@@ -225,16 +226,9 @@ int64_t pos_factor_comb(groups_t& groups, int groupcount)
 
 int64_t f_materialized(int n)
 {
-	//int64_t result = 1;
-	//int64_t d = 9;
-	//for (int i = 0; i < n; i++)
-	//{
-	//	result *= d;
-	//	d -= 1;
-	//}
-	//return result;
-	//return comb(9, n);
-	return fac(n) * comb(9, n);
+	// Choose n digits from 9 non-zero digits, and assign them to n group positions
+	// Each different assignment creates different numbers
+	return comb(9, n) * fac(n);
 }
 
 int64_t calcGroups_rec(
@@ -267,9 +261,9 @@ int64_t calcGroups_rec(
 			if (DIGITCOUNT - nzcount <= DIGITLIMIT)
 			{
 
-				int64_t count = 0;
-				int64_t digitsfactor = f_materialized(groupindex);
-#ifdef DBG_PRINT
+							int64_t count = 0;
+							int64_t digitsfactor = f_materialized(groupindex);
+				#ifdef DBG_PRINT
 				dbg_printGroups(groups, groupindex);
 				std::cout << " digitsfactor: " << digitsfactor << std::endl;
 #endif
