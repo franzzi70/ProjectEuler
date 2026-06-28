@@ -10,12 +10,15 @@ The program should calculate how many 18 digtit numbers withoutt leading zeroes 
 #include <algorithm>
 #include <cassert>
 
+const bool ALLDIGITSPRESENT = false;
 const int DIGITCOUNT = 18;
 const int DIGITLIMIT = 3;
 
-//const int DIGITCOUNT = 4;
+//const int DIGITCOUNT = 11;
 //const int DIGITLIMIT = 3;
 
+//const int DIGITCOUNT = 8;
+//const int DIGITLIMIT = 7;
 
 #define DBG_PRINT
 
@@ -251,19 +254,29 @@ int64_t calcGroups_rec(
 
 	int64_t rec_count = 0;
 
-	if (groupindex < 9)
+	if (
+		(groupindex <= 9)
+		&&
+		(!ALLDIGITSPRESENT || groupindex == 8)	// if ALLDIGITSPRESENT, then we need to have all 9 non-zero digits present, so we only allow the last group to be processed (groupindex == 8).
+		)
 	{
+
 		int digit_count = groups[groupindex].count;
 		assert(digit_count == 0);
 
 		if (groupindex != 0)
 		{
-			if (DIGITCOUNT - nzcount <= DIGITLIMIT)
+			if (
+				(DIGITCOUNT - nzcount <= DIGITLIMIT)
+				&&
+				(!ALLDIGITSPRESENT || DIGITCOUNT - nzcount > 0)	// if ALLDIGITSPRESENT, then we need at least one zero to be present.
+				)
 			{
 
-							int64_t count = 0;
-							int64_t digitsfactor = f_materialized(groupindex);
-				#ifdef DBG_PRINT
+				int64_t count = 0;
+				int64_t digitsfactor = f_materialized(groupindex);
+
+#ifdef DBG_PRINT
 				dbg_printGroups(groups, groupindex);
 				std::cout << " digitsfactor: " << digitsfactor << std::endl;
 #endif
@@ -302,10 +315,16 @@ int64_t calcGroups_rec(
 				std::cout << " count: " << count << std::endl;
 
 #endif
+				rec_count = count;
 				overall_sum += count;
 
 
 			}
+		}
+
+		if (groupindex == 9)
+		{
+			return rec_count;
 		}
 
 		for (int i = 1; i <= high_limit; i++)
