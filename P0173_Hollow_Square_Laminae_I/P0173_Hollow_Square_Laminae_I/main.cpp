@@ -6,6 +6,10 @@
 
 const int TILECOUNT = 1000000;
 
+#define DBG_PRINT
+#undef DBG_PRINT
+
+
 int area(int innerwidth, int outerwidth)
 {
 	assert((innerwidth & 1) == (outerwidth & 1));
@@ -32,7 +36,9 @@ int64_t solve()
 		inner += 1;
 	}
 
+#ifdef DBG_PRINT
 	std::cout << "shapecount: " << shapecount << std::endl;
+#endif
 
 	//int a1 = area(2, 6);
 	//int a2 = area(7, 9);
