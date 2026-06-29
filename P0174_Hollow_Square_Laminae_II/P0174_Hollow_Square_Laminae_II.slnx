@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="P0174_Hollow_Square_Laminae_II/P0174_Hollow_Square_Laminae_II.vcxproj" />
+</Solution>
